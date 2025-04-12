@@ -1,62 +1,55 @@
+
+
+
 "use client";
 
-import React, { useState } from "react";
-import { ShoppingBag, Star } from "lucide-react";
+import React, { useRef, useState, useEffect } from "react";
+import { ShoppingBag, Star, ChevronLeft, ChevronRight } from "lucide-react";
 
 const ProductCard = ({ product }) => {
-  const [selectedColor, setSelectedColor] = useState(0);
-
   return (
-    <div className="bg-white border rounded-xl p-4 hover:shadow-lg transition-shadow duration-300">
-      <div className="relative overflow-hidden rounded-lg bg-gray-100 mb-4">
+    <div className="bg-white rounded-xl p-3 sm:p-4 hover:shadow-lg transition-shadow duration-300">
+      <div className="relative overflow-hidden rounded-lg bg-gray-50 mb-3 sm:mb-4">
         <img
-          src={`https://via.placeholder.com/300x300?text=${product.name}`}
+          src={product.image || `https://via.placeholder.com/300x300?text=${product.name}`}
           alt={product.name}
-          className="w-full h-64 object-cover transition-transform duration-300 hover:scale-105"
+          className="w-full aspect-square object-cover transition-transform duration-300 hover:scale-105"
         />
         {product.discount > 0 && (
-          <span className="absolute top-2 left-2 bg-rose-500 text-white text-xs font-semibold px-2 py-1 rounded">
+          <span className="absolute top-2 left-2 bg-[#1a2649] text-white text-[10px] sm:text-xs font-semibold px-2 py-1 rounded">
             {product.discount}% OFF
           </span>
         )}
         {product.isNew && (
-          <span className="absolute top-2 right-2 bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded">
+          <span className="absolute top-2 right-2 bg-[#1a2649] text-white text-[10px] sm:text-xs font-semibold px-2 py-1 rounded">
             NEW
           </span>
         )}
       </div>
 
-      <div className="space-y-2">
-        <h3 className="text-lg font-semibold text-gray-900">{product.name}</h3>
+      <div className="space-y-1.5 sm:space-y-2">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900 line-clamp-1">
+          {product.name}
+        </h3>
 
-        <div className="flex items-center text-sm text-gray-600">
-          <Star className="w-4 h-4 text-amber-500 fill-amber-500 mr-1" />
+        <div className="flex items-center text-xs sm:text-sm text-gray-600">
+          <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#1a2649] fill-[#1a2649] mr-1" />
           {product.rating} ({product.reviewCount} reviews)
         </div>
 
         <div className="flex items-baseline gap-2">
-          <span className="text-xl font-bold text-gray-900">${product.price}</span>
+          <span className="text-lg sm:text-xl font-bold text-[#1a2649]">
+            ${product.price}
+          </span>
           {product.originalPrice > product.price && (
-            <span className="text-sm line-through text-gray-500">${product.originalPrice}</span>
+            <span className="text-xs sm:text-sm line-through text-gray-500">
+              ${product.originalPrice}
+            </span>
           )}
         </div>
 
-        {product.colors.length > 0 && (
-          <div className="flex items-center gap-2">
-            {product.colors.map((color, idx) => (
-              <button
-                key={idx}
-                onClick={() => setSelectedColor(idx)}
-                className={`w-5 h-5 rounded-full ${color.value} border-2 ${
-                  selectedColor === idx ? "ring-2 ring-gray-800" : "border-white"
-                }`}
-              ></button>
-            ))}
-          </div>
-        )}
-
-        <button className="mt-3 w-full bg-gray-900 hover:bg-gray-800 text-white py-2 rounded-lg flex items-center justify-center font-medium text-sm">
-          <ShoppingBag className="w-4 h-4 mr-2" />
+        <button className="px-6 items-center justify-center sm:px-8 py-1.5 sm:py-2 border border-gray-300 rounded text-xs sm:text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer flex duration-300">
+          <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
           Add to Cart
         </button>
       </div>
@@ -67,104 +60,154 @@ const ProductCard = ({ product }) => {
 const TopProducts = () => {
   const products = [
     {
-      name: "Crossbody Bag",
-      price: 189.99,
-      originalPrice: 249.99,
+      name: "Pearl Drop Earrings",
+      price: 89.99,
+      originalPrice: 119.99,
       rating: 4.8,
       reviewCount: 126,
       isNew: true,
-      discount: 24,
-      colors: [
-        { name: "Cognac", value: "bg-amber-700" },
-        { name: "Black", value: "bg-gray-900" },
-        { name: "Burgundy", value: "bg-red-900" }
-      ]
-    },
-    {
-      name: "Slim Fit Shirt",
-      price: 59.99,
-      originalPrice: 79.99,
-      rating: 4.6,
-      reviewCount: 88,
-      isNew: false,
       discount: 25,
+      image: "/images/pearl-earrings.jpg",
       colors: [
-        { name: "White", value: "bg-white border" },
-        { name: "Blue", value: "bg-blue-700" }
+        { name: "Gold", value: "bg-amber-200" },
+        { name: "Silver", value: "bg-gray-200" },
+        { name: "Rose Gold", value: "bg-rose-200" }
       ]
     },
     {
-      name: "Running Sneakers",
+      name: "Crystal Necklace",
       price: 129.99,
-      originalPrice: 169.99,
-      rating: 4.7,
-      reviewCount: 210,
+      originalPrice: 159.99,
+      rating: 4.9,
+      reviewCount: 88,
       isNew: true,
       discount: 20,
+      image: "/images/crystal-necklace.jpg",
       colors: [
-        { name: "Gray", value: "bg-gray-500" },
-        { name: "Navy", value: "bg-blue-900" }
+        { name: "Silver", value: "bg-gray-200" },
+        { name: "Gold", value: "bg-amber-200" }
       ]
     },
     {
-      name: "Denim Jacket",
-      price: 99.99,
-      originalPrice: 129.99,
-      rating: 4.5,
-      reviewCount: 64,
+      name: "Charm Bracelet",
+      price: 69.99,
+      originalPrice: 89.99,
+      rating: 4.7,
+      reviewCount: 210,
       isNew: false,
-      discount: 23,
+      discount: 22,
+      image: "/images/charm-bracelet.jpg",
       colors: [
-        { name: "Denim", value: "bg-blue-600" }
-      ]
-    },
-    {
-      name: "Leather Boots",
-      price: 149.99,
-      originalPrice: 199.99,
-      rating: 4.9,
-      reviewCount: 142,
-      isNew: true,
-      discount: 30,
-      colors: [
-        { name: "Brown", value: "bg-amber-900" },
-        { name: "Black", value: "bg-black" }
-      ]
-    },
-    {
-      name: "Basic T-Shirt",
-      price: 29.99,
-      originalPrice: 39.99,
-      rating: 4.3,
-      reviewCount: 300,
-      isNew: false,
-      discount: 25,
-      colors: [
-        { name: "Gray", value: "bg-gray-300" },
-        { name: "Black", value: "bg-black" }
+        { name: "Gold", value: "bg-amber-200" },
+        { name: "Rose Gold", value: "bg-rose-200" }
       ]
     }
   ];
 
+  const containerRef = useRef(null);
+  const [isScrollable, setIsScrollable] = useState(false);
+  const [scrollPosition, setScrollPosition] = useState(0);
+  const [maxScroll, setMaxScroll] = useState(0);
+
+  useEffect(() => {
+    const checkScrollable = () => {
+      if (containerRef.current) {
+        const { scrollWidth, clientWidth } = containerRef.current;
+        setIsScrollable(scrollWidth > clientWidth);
+        setMaxScroll(scrollWidth - clientWidth);
+      }
+    };
+
+    checkScrollable();
+    window.addEventListener('resize', checkScrollable);
+    return () => window.removeEventListener('resize', checkScrollable);
+  }, []);
+
+  const handleScroll = (direction) => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const scrollAmount = container.clientWidth * 0.8;
+    const newScrollPosition = direction === 'left' 
+      ? Math.max(0, container.scrollLeft - scrollAmount)
+      : Math.min(maxScroll, container.scrollLeft + scrollAmount);
+
+    container.scrollTo({
+      left: newScrollPosition,
+      behavior: 'smooth'
+    });
+
+    setScrollPosition(newScrollPosition);
+  };
+
+  const handleScrollChange = () => {
+    if (containerRef.current) {
+      setScrollPosition(containerRef.current.scrollLeft);
+    }
+  };
+
   return (
-    <section className="bg-gray-50 py-16">
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Top Picks</h2>
-          <p className="mt-2 text-gray-600 text-lg"> Discover our handpicked selection of premium quality products that redefine elegance and style.</p>
+    <section id="top picks" className=" bg-white py-8 sm:py-12 lg:py-16 mt-24">
+      <div className="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header Section */}
+        <div className="text-center mb-8 sm:mb-12">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#1a2649]">
+            Top Picks
+          </h2>
+          <p className="mt-2 text-base sm:text-lg text-gray-600 max-w-2xl mx-auto">
+            Discover our handpicked selection of premium jewelry that defines elegance and style
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-          {products.map((product, idx) => (
-            <ProductCard key={idx} product={product} />
-          ))}
+        {/* Products Slider Container */}
+        <div className="relative max-w-[1400px] mx-auto px-4 sm:px-0">
+          {/* Navigation Button - Left */}
+          {isScrollable && scrollPosition > 0 && (
+            <button
+              onClick={() => handleScroll('left')}
+              className="absolute -left-2 sm:-left-6 top-1/2 -translate-y-1/2 z-50 bg-white hover:bg-gray-100 text-[#1a2649] p-2 sm:p-3 rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center justify-center"
+              aria-label="Scroll left"
+            >
+              <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
+          )}
+
+          {/* Products Wrapper */}
+          <div
+            ref={containerRef}
+            onScroll={handleScrollChange}
+            className="flex overflow-x-auto gap-3 md:gap-4 pb-4 relative [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] snap-x snap-mandatory"
+          >
+            {products.map((product, idx) => (
+              <div 
+                key={idx} 
+                className="flex-shrink-0 w-full sm:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-0.75rem)] snap-center"
+              >
+                <div className="max-w-[320px] mx-auto">
+                  <ProductCard product={product} />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Navigation Button - Right */}
+          {isScrollable && scrollPosition < maxScroll && (
+            <button
+              onClick={() => handleScroll('right')}
+              className="absolute -right-2 sm:-right-6 top-1/2 -translate-y-1/2 z-50 bg-white hover:bg-gray-100 text-[#1a2649] p-2 sm:p-3 rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center justify-center"
+              aria-label="Scroll right"
+            >
+              <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
+          )}
         </div>
 
-        <div className="mt-12 text-center">
-          <button className="px-6 py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">
-            View All Products
+        {/* View All Button */}
+        <div className="text-center mt-6 md:mt-8">
+          <button className="px-6 sm:px-8 py-1.5 sm:py-2 border border-gray-300 rounded text-xs sm:text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">
+           View All Products
           </button>
-        </div>
+      </div>
       </div>
     </section>
   );
