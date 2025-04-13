@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 
 const PremiumHero = () => {
   const [activeSlide, setActiveSlide] = useState(0);
@@ -62,7 +63,7 @@ const PremiumHero = () => {
   useEffect(() => {
     startAutoSlide();
     return () => clearInterval(timerRef.current);
-  }, [activeSlide]);
+  }, []);
 
   const resetTimer = () => {
     clearInterval(timerRef.current);
@@ -103,10 +104,12 @@ const PremiumHero = () => {
                 <div className="relative h-80 w-80 flex items-center justify-center">
                   <div className="absolute inset-0 bg-white/10 rounded-full blur-2xl scale-75"></div>
                   <div className="absolute inset-0 border-4 border-white/20 rounded-full scale-90"></div>
-                  <img
+                  <Image
                     src="/api/placeholder/500/500"
                     alt={product.title}
                     className="relative z-10 max-h-full max-w-full object-contain transform hover:scale-105 transition-transform duration-500"
+                    fill
+                    style={{ objectFit: 'cover' }}
                   />
                 </div>
               </div>

@@ -76,7 +76,7 @@ export default function Navbar() {
     });
 
     return () => observer.disconnect();
-  }, []);
+  },);
 
   const handleLinkClick = useCallback((linkName) => {
     const formattedLink = linkName.toLowerCase();
