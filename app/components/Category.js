@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 
 const ProductCategories = () => {
   const categories = [
@@ -205,10 +206,11 @@ const ProductCategories = () => {
                   {/* Category Image Container - responsive padding */}
                   <div className="relative mb-2 sm:mb-3">
                     <div className="bg-white rounded-full p-2 sm:p-3 md:p-4 aspect-square flex items-center justify-center overflow-hidden shadow-sm">
-                      <img
+                      <Image
                         src={category.image}
                         alt={category.name}
                         className="w-3/4 sm:w-4/5 h-3/4 sm:h-4/5 object-contain transition-transform duration-300 group-hover:scale-110"
+                  fill
                       />
                     </div>
                   </div>

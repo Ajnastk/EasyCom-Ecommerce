@@ -2,7 +2,7 @@
 
 
 "use client";
-
+import Image from "next/image";
 import React, { useRef, useState, useEffect } from "react";
 import { ShoppingBag, Star, ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -10,10 +10,12 @@ const ProductCard = ({ product }) => {
   return (
     <div className="bg-white rounded-xl p-3 sm:p-4 hover:shadow-lg transition-shadow duration-300">
       <div className="relative overflow-hidden rounded-lg bg-gray-50 mb-3 sm:mb-4">
-        <img
+        <Image
           src={product.image || `https://via.placeholder.com/300x300?text=${product.name}`}
           alt={product.name}
           className="w-full aspect-square object-cover transition-transform duration-300 hover:scale-105"
+            fill
+  style={{ objectFit: 'cover' }}
         />
         {product.discount > 0 && (
           <span className="absolute top-2 left-2 bg-[#1a2649] text-white text-[10px] sm:text-xs font-semibold px-2 py-1 rounded">

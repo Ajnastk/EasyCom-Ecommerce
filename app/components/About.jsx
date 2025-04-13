@@ -1,3 +1,4 @@
+import Image from "next/image";
 const About = () => {
   return (
     <div id="about" className="bg-[#1a2649]">
@@ -11,10 +12,12 @@ const About = () => {
         <div className="grid md:grid-cols-2 gap-12 items-center">
           {/* Image */}
           <div className="rounded-lg overflow-hidden">
-            <img
+            <Image
               src="/jewelry-image.jpg" // Replace with your actual image path
               alt="ABOUTUS img"
               className="w-full h-auto rounded-lg"
+              fill
+              style={{ objectFit: 'cover' }}
             />
           </div>
 

@@ -3,7 +3,7 @@ import User from "@/lib/models/User";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { CreateJwt } from "@/lib/Jwt";
-import cookie from "cookie";
+import * as cookie from 'cookie';
 
 export async function POST(req) {
   await dbConnect();
