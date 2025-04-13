@@ -98,21 +98,6 @@ const PremiumHero = () => {
                 <p className="text-2xl opacity-90">{product.tagline}</p>
                 <p className="text-lg md:text-xl opacity-80 max-w-md">{product.description}</p>
               </div>
-
-              {/* Image */}
-              <div className="w-full md:w-1/2 flex justify-center items-center mt-10 md:mt-0">
-                <div className="relative h-80 w-80 flex items-center justify-center">
-                  <div className="absolute inset-0 bg-white/10 rounded-full blur-2xl scale-75"></div>
-                  <div className="absolute inset-0 border-4 border-white/20 rounded-full scale-90"></div>
-                  <Image
-                    src="/api/placeholder/500/500"
-                    alt={product.title}
-                    className="relative z-10 max-h-full max-w-full object-contain transform hover:scale-105 transition-transform duration-500"
-                    fill
-                    style={{ objectFit: 'cover' }}
-                  />
-                </div>
-              </div>
             </div>
           </div>
         ))}
