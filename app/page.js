@@ -13,7 +13,6 @@ export default function Home() {
       <TopProducts />
       <About/>
       <Testimonial/>
-      <Footer />
     </div>
   );
 }

@@ -1,6 +1,10 @@
 "use client"
 import { useState, useEffect, useCallback } from "react";
-import { Menu, X, ShoppingCart, Heart, Search, User, ChevronDown } from 'lucide-react';
+import { Menu, X, ShoppingCart, Heart, Search, User, ChevronDown, LogIn } from 'lucide-react';
+import Link from "next/link";
+import { usePathname } from 'next/navigation';
+import { AuthModal, UserMenu } from './AuthModal'; // Import the auth components
+import Image from "next/image";
 
 export default function Navbar() {
   const [click, setClick] = useState(false);
@@ -10,30 +14,77 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [cartCount, setCartCount] = useState(3);
   const [isMobile, setIsMobile] = useState(false);
+  const pathname = usePathname();
+  const isHomePage = pathname === '/' || pathname === '/#';
+  
+  // Auth state
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [user, setUser] = useState(null);
   
   // Main navigation categories
-  const navLinks = ["Home", "Categories", "New Arrivals", "Top Picks", "About", "Contact"];
+  const navLinks = [
+    { name: "Home", type: isHomePage ? "scroll" : "link", id: "home", path: "/" },
+    { name: "Categories", type: isHomePage ? "scroll" : "link", id: "categories", path: "/#categories" },
+    { name: "All Products", type: "link", id: "products", path: "/products" },
+    { name: "New Arrivals", type: isHomePage ? "scroll" : "link", id: "new arrivals", path: "/#new arrivals" },
+    { name: "Top Picks", type: isHomePage ? "scroll" : "link", id: "top picks", path: "/#top picks" },
+    { name: "About", type: isHomePage ? "scroll" : "link", id: "about", path: "/#about" },
+    { name: "Contact", type: isHomePage ? "scroll" : "link", id: "contact", path: "/#contact" }
+  ];
+  
+  // Check for user on load and set up event listener for login
+  useEffect(() => {
+    // Check if user is logged in from localStorage
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+        localStorage.removeItem('user');
+      }
+    }
+    
+    // Listen for login events
+    const handleLogin = () => {
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        setUser(JSON.parse(userData));
+      }
+    };
+    
+    window.addEventListener('userLoggedIn', handleLogin);
+    
+    return () => {
+      window.removeEventListener('userLoggedIn', handleLogin);
+    };
+  }, []);
+  
+  // Handle logout
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    setUser(null);
+  };
   
   const handleClick = () => setClick(!click);
   const toggleSearch = () => setSearchOpen(!searchOpen);
+  const openAuthModal = () => setAuthModalOpen(true);
 
   // Check if we're on a mobile device
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768); // 768px is the standard md breakpoint in Tailwind
+      setIsMobile(window.innerWidth < 768);
     };
     
-    checkMobile(); // Check on initial load
+    checkMobile();
     window.addEventListener('resize', checkMobile);
     
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Throttle scroll handler using useCallback
+  // Throttle scroll handler
   const handleScroll = useCallback(() => {
-    // Only apply scroll hiding on non-mobile devices
     if (isMobile) {
-      // Always show navbar on mobile
       setVisible(true);
       return;
     }
@@ -54,6 +105,9 @@ export default function Navbar() {
   }, [handleScroll]);
 
   useEffect(() => {
+    // Only set up intersection observer on homepage
+    if (!isHomePage) return;
+    
     const observerOptions = {
       root: null,
       rootMargin: '0px',
@@ -70,19 +124,20 @@ export default function Navbar() {
       });
     }, observerOptions);
 
+    // Only observe on homepage
     navLinks.forEach(link => {
-      const section = document.getElementById(link.toLowerCase());
-      if (section) observer.observe(section);
+      if (link.type === "scroll") {
+        const section = document.getElementById(link.id);
+        if (section) observer.observe(section);
+      }
     });
 
     return () => observer.disconnect();
-  },);
+  }, [isHomePage]);
 
   const handleLinkClick = useCallback((linkName) => {
-    const formattedLink = linkName.toLowerCase();
-    setActiveLink(formattedLink);
+    setActiveLink(linkName);
     setClick(false);
-    window.history.replaceState(null, '', `#${formattedLink}`);
   }, []);
 
   const scrollToSection = useCallback((id) => {
@@ -103,8 +158,8 @@ export default function Navbar() {
         {/* Top section with logo, search, and icons */}
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between py-4">
-            {/* Logo */}
-            <div className="text-2xl font-bold mr-8">EASYCOM</div>
+            {/* Logo with link to homepage */}
+            <Link href="/" className="text-2xl font-bold mr-8">EASYCOM</Link>
             
             {/* Search bar - visible on larger screens */}
             <div className="hidden md:flex flex-grow max-w-xl relative">
@@ -120,10 +175,18 @@ export default function Navbar() {
             
             {/* Action icons - visible on larger screens */}
             <div className="hidden md:flex items-center space-x-6 ml-8">
-              <button className="flex flex-col items-center text-gray-700 hover:text-blue-600">
-                <User size={22} />
-                <span className="text-xs mt-1">Account</span>
-              </button>
+              {/* User Account / Profile */}
+              {user ? (
+                <UserMenu user={user} onLogout={handleLogout} />
+              ) : (
+                <button 
+                  onClick={openAuthModal}
+                  className="flex flex-col items-center text-gray-700 hover:text-blue-600"
+                >
+                  <LogIn size={22} />
+                  <span className="text-xs mt-1">Login</span>
+                </button>
+              )}
               
               <button className="flex flex-col items-center text-gray-700 hover:text-blue-600">
                 <Heart size={22} />
@@ -146,6 +209,21 @@ export default function Navbar() {
               <button onClick={toggleSearch} aria-label="Search">
                 <Search size={24} />
               </button>
+              
+              {user ? (
+                <div style={{ position: 'relative', width: '50px', height: '50px' }}>
+                <Image
+                  src="./next.svg"
+                  alt="Avatar"
+                  fill
+                  style={{ objectFit: 'cover' }}
+                />
+              </div>
+              ) : (
+                <button onClick={openAuthModal} aria-label="Login">
+                  <LogIn size={24} />
+                </button>
+              )}
               
               <button className="relative" aria-label="Shopping Cart">
                 <ShoppingCart size={24} />
@@ -182,22 +260,36 @@ export default function Navbar() {
           <div className="hidden md:block border-t border-gray-200">
             <ul className="flex justify-center space-x-8 py-3 text-sm font-medium">
               {navLinks.map((item) => {
-                const linkId = item.toLowerCase();
+                const isActive = item.type === "scroll" 
+                  ? activeLink === item.id 
+                  : pathname === item.path;
+                  
                 return (
-                  <li key={item} className="relative group">
-                    <a 
-                      href={`#${linkId}`} 
-                      onClick={(e) => { 
-                        e.preventDefault();
-                        scrollToSection(linkId);
-                        handleLinkClick(linkId);
-                      }}
-                      className={`flex items-center transition-colors  duration-300 hover:text-blue-600 ${activeLink === linkId ? 'text-blue-600' : ''}`}
-                      aria-current={activeLink === linkId ? 'page' : undefined}
-                    >
-                      {item}
-                      {item === "Shop" && <ChevronDown size={16} className="ml-1" />}
-                    </a>
+                  <li key={item.name} className="relative group">
+                    {item.type === "scroll" ? (
+                      <a 
+                        href={`#${item.id}`} 
+                        onClick={(e) => { 
+                          e.preventDefault();
+                          scrollToSection(item.id);
+                          handleLinkClick(item.id);
+                        }}
+                        className={`flex items-center transition-colors duration-300 hover:text-blue-600 ${isActive ? 'text-blue-600' : ''}`}
+                        aria-current={isActive ? 'page' : undefined}
+                      >
+                        {item.name}
+                        {item.name === "Shop" && <ChevronDown size={16} className="ml-1" />}
+                      </a>
+                    ) : (
+                      <Link 
+                        href={item.path}
+                        onClick={() => handleLinkClick(item.id)}
+                        className={`flex items-center transition-colors duration-300 hover:text-blue-600 ${isActive ? 'text-blue-600' : ''}`}
+                        aria-current={isActive ? 'page' : undefined}
+                      >
+                        {item.name}
+                      </Link>
+                    )}
                   </li>
                 );
               })}
@@ -214,27 +306,58 @@ export default function Navbar() {
         >
           <ul className="py-3">
             {navLinks.map((item) => {
-              const linkId = item.toLowerCase();
+              const isActive = item.type === "scroll" 
+                ? activeLink === item.id 
+                : pathname === item.path;
+                
               return (
-                <li key={item} className="border-b border-gray-200 last:border-b-0">
-                  <a 
-                    href={`#${linkId}`} 
-                    onClick={(e) => { 
-                      e.preventDefault();
-                      scrollToSection(linkId);
-                      handleLinkClick(linkId);
-                    }}
-                    className={`block py-3 px-6 text-black ${activeLink === linkId ? 'text-blue-600 font-medium' : ''}`}
-                    aria-current={activeLink === linkId ? 'page' : undefined}
-                  >
-                    {item}
-                  </a>
+                <li key={item.name} className="border-b border-gray-200 last:border-b-0">
+                  {item.type === "scroll" ? (
+                    <a 
+                      href={`#${item.id}`} 
+                      onClick={(e) => { 
+                        e.preventDefault();
+                        scrollToSection(item.id);
+                        handleLinkClick(item.id);
+                      }}
+                      className={`block py-3 px-6 text-black ${isActive ? 'text-blue-600 font-medium' : ''}`}
+                      aria-current={isActive ? 'page' : undefined}
+                    >
+                      {item.name}
+                    </a>
+                  ) : (
+                    <Link 
+                      href={item.path}
+                      onClick={() => setClick(false)}
+                      className={`block py-3 px-6 text-black ${isActive ? 'text-blue-600 font-medium' : ''}`}
+                      aria-current={isActive ? 'page' : undefined}
+                    >
+                      {item.name}
+                    </Link>
+                  )}
                 </li>
               );
             })}
             {/* Additional mobile menu items */}
             <li className="border-b border-gray-200">
-              <a href="#account" className="block text-black py-3 px-6">My Account</a>
+              {user ? (
+                <button 
+                  onClick={handleLogout}
+                  className="block w-full text-left py-3 px-6 text-black"
+                >
+                  Sign Out
+                </button>
+              ) : (
+                <button 
+                  onClick={() => {
+                    setAuthModalOpen(true);
+                    setClick(false);
+                  }}
+                  className="block w-full text-left py-3 px-6 text-black"
+                >
+                  Sign In / Register
+                </button>
+              )}
             </li>
             <li className="border-b border-gray-200">
               <a href="#wishlist" className="block py-3 text-black px-6">Wishlist</a>
@@ -242,6 +365,12 @@ export default function Navbar() {
           </ul>
         </div>
       )}
+      
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={authModalOpen} 
+        onClose={() => setAuthModalOpen(false)}
+      />
     </div>
   );
 }

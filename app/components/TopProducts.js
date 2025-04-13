@@ -5,17 +5,17 @@
 import Image from "next/image";
 import React, { useRef, useState, useEffect } from "react";
 import { ShoppingBag, Star, ChevronLeft, ChevronRight } from "lucide-react";
+import Link from "next/link"
 
 const ProductCard = ({ product }) => {
   return (
-    <div className="bg-white rounded-xl p-3 sm:p-4 hover:shadow-lg transition-shadow duration-300">
+    <div className="bg-white  border-4 rounded-xl p-3 sm:p-4 hover:shadow-lg transition-shadow duration-300">
       <div className="relative overflow-hidden rounded-lg bg-gray-50 mb-3 sm:mb-4">
         <Image
           src={product.image || `https://via.placeholder.com/300x300?text=${product.name}`}
           alt={product.name}
           className="w-full aspect-square object-cover transition-transform duration-300 hover:scale-105"
             fill
-  style={{ objectFit: 'cover' }}
         />
         {product.discount > 0 && (
           <span className="absolute top-2 left-2 bg-[#1a2649] text-white text-[10px] sm:text-xs font-semibold px-2 py-1 rounded">
@@ -157,7 +157,7 @@ const TopProducts = () => {
             Top Picks
           </h2>
           <p className="mt-2 text-base sm:text-lg text-gray-600 max-w-2xl mx-auto">
-            Discover our handpicked selection of premium jewelry that defines elegance and style
+            Discover our handpicked selection of premium jewelry that defines elegance and style.
           </p>
         </div>
 
@@ -206,10 +206,12 @@ const TopProducts = () => {
 
         {/* View All Button */}
         <div className="text-center mt-6 md:mt-8">
-          <button className="px-6 sm:px-8 py-1.5 sm:py-2 border border-gray-300 rounded text-xs sm:text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">
-           View All Products
-          </button>
-      </div>
+  <Link href="/products">
+    <button className="px-6 sm:px-8 py-1.5 sm:py-2 border border-gray-300 rounded text-xs sm:text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">
+      View All Products
+    </button>
+  </Link>
+</div>
       </div>
     </section>
   );
