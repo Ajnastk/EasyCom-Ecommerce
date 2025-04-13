@@ -7,35 +7,35 @@ const ProductCategories = () => {
   const categories = [
     {
       name: 'Keychains',
-      image: '/images/categories/keychains.jpg',
+      image: "/image/product.jpeg",
     },
     {
       name: 'Necklaces',
-      image: '/images/categories/necklaces.jpg',
+      image:"/image/product.jpeg",
     },
     {
       name: 'Bracelets',
-      image: '/images/categories/bracelets.jpg',
+      image: "/image/product.jpeg",
     },
     {
       name: 'Earrings',
-      image: '/images/categories/earrings.jpg',
+      image: "/image/product.jpeg",
     },
     {
       name: 'Rings',
-      image: '/images/categories/rings.jpg',
+      image: "/image/product.jpeg",
     },
     {
       name: 'Accessories',
-      image: '/images/categories/accessories.jpg',
+      image: "/image/product.jpeg",
     },
     {
       name: 'Pendants',
-      image: '/images/categories/accessories.jpg',
+      image: "/image/product.jpeg",
     },
     {
       name: 'Charms',
-      image: '/images/categories/accessories.jpg',
+      image: "/image/product.jpeg",
     }
   ];
 
@@ -170,7 +170,7 @@ const ProductCategories = () => {
         </h2>
 
         {/* Categories Container */}
-        <div className="relative px-6 md:px-8 lg:px-10">
+        <div className="relative px-6 md:px-8 mt-24 lg:px-10">
           {/* Previous Button - responsive positioning */}
           <button 
             className={`absolute -left-2 sm:-left-3 md:-left-4 top-1/2 -translate-y-1/2 z-10 transition-opacity ${scrollPosition <= 0 ? 'opacity-50 cursor-not-allowed' : 'opacity-100'}`}
@@ -205,14 +205,15 @@ const ProductCategories = () => {
                 >
                   {/* Category Image Container - responsive padding */}
                   <div className="relative mb-2 sm:mb-3">
-                    <div className="bg-white rounded-full p-2 sm:p-3 md:p-4 aspect-square flex items-center justify-center overflow-hidden shadow-sm">
-                      <Image
-                        src={category.image}
-                        alt={category.name}
-                        className="w-3/4 sm:w-4/5 h-3/4 sm:h-4/5 object-contain transition-transform duration-300 group-hover:scale-110"
-                  fill
-                      />
-                    </div>
+                  <div className="bg-white rounded-full aspect-square overflow-hidden shadow-sm relative">
+  <Image
+    src={category.image}
+    alt={category.name}
+    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+    fill
+    sizes="(max-width: 640px) 100px, (max-width: 768px) 120px, 150px"
+  />
+</div>
                   </div>
                   
                   {/* Category Info - responsive text */}
@@ -276,7 +277,7 @@ const ProductCategories = () => {
         `}</style>
 
         {/* Browse All Button - responsive padding/margin */}
-        <div className="text-center mt-6 md:mt-8">
+        <div className="text-center lg:mt-24 md:mt-14 sm:mt-8 mt-8 ">
           <button className="px-6 sm:px-8 py-1.5 sm:py-2 border border-gray-300 rounded text-xs sm:text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">
             Browse All Categories
           </button>

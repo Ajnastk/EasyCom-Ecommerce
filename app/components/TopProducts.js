@@ -2,21 +2,23 @@
 
 
 "use client";
-import Image from "next/image";
+import Link from "next/link";
 import React, { useRef, useState, useEffect } from "react";
 import { ShoppingBag, Star, ChevronLeft, ChevronRight } from "lucide-react";
-import Link from "next/link"
+import Image from "next/image";
+
 
 const ProductCard = ({ product }) => {
   return (
-    <div className="bg-white  border-4 rounded-xl p-3 sm:p-4 hover:shadow-lg transition-shadow duration-300">
-      <div className="relative overflow-hidden rounded-lg bg-gray-50 mb-3 sm:mb-4">
-        <Image
-          src={product.image || `https://via.placeholder.com/300x300?text=${product.name}`}
-          alt={product.name}
-          className="w-full aspect-square object-cover transition-transform duration-300 hover:scale-105"
-            fill
-        />
+    <div className="bg-white rounded-xl p-3 sm:p-4 border-1 hover:shadow-lg transition-shadow duration-300">
+     <div className="relative overflow-hidden rounded-lg bg-gray-50 mb-3 sm:mb-4 aspect-square">
+  <Image
+    src={product.image}
+    alt={product.name}
+    width={300}
+    height={300}
+    className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+  />
         {product.discount > 0 && (
           <span className="absolute top-2 left-2 bg-[#1a2649] text-white text-[10px] sm:text-xs font-semibold px-2 py-1 rounded">
             {product.discount}% OFF
@@ -69,7 +71,7 @@ const TopProducts = () => {
       reviewCount: 126,
       isNew: true,
       discount: 25,
-      image: "/images/pearl-earrings.jpg",
+      image: "/image/product.jpeg",
       colors: [
         { name: "Gold", value: "bg-amber-200" },
         { name: "Silver", value: "bg-gray-200" },
@@ -84,7 +86,7 @@ const TopProducts = () => {
       reviewCount: 88,
       isNew: true,
       discount: 20,
-      image: "/images/crystal-necklace.jpg",
+      image: "/image/product.jpeg",
       colors: [
         { name: "Silver", value: "bg-gray-200" },
         { name: "Gold", value: "bg-amber-200" }
@@ -98,7 +100,7 @@ const TopProducts = () => {
       reviewCount: 210,
       isNew: false,
       discount: 22,
-      image: "/images/charm-bracelet.jpg",
+      image: "/image/product.jpeg",
       colors: [
         { name: "Gold", value: "bg-amber-200" },
         { name: "Rose Gold", value: "bg-rose-200" }
@@ -149,17 +151,18 @@ const TopProducts = () => {
   };
 
   return (
-    <section id="top picks" className=" bg-white py-8 sm:py-12 lg:py-16 mt-24">
+    <section id="top picks" className=" bg-white py-8 sm:py-12 lg:py-16">
       <div className="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header Section */}
-        <div className="text-center mb-8 sm:mb-12">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#1a2649]">
-            Top Picks
-          </h2>
-          <p className="mt-2 text-base sm:text-lg text-gray-600 max-w-2xl mx-auto">
-            Discover our handpicked selection of premium jewelry that defines elegance and style.
+         {/* Header - responsive text sizes */}
+         <div className="text-center mb-8 sm:mb-12">
+         <h2 className="text-center">
+          <span className="text-xl sm:text-2xl md:text-3xl text-gray-800">Top </span>
+          <span className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Picks</span>
+        </h2>
+        <p className="mt-2 text-base sm:text-lg text-gray-600 max-w-2xl mx-auto">
+            Discover our handpicked selection of premium Perfume that define your attractiveness.
           </p>
-        </div>
+      </div>
 
         {/* Products Slider Container */}
         <div className="relative max-w-[1400px] mx-auto px-4 sm:px-0">
