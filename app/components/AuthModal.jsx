@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect } from "react";
 import { Eye, EyeOff, Mail, Lock, User, X, ChevronRight } from 'lucide-react';
+import Link from "next/link";
 
 // Auth Modal Component - to be imported in your Navbar
 export function AuthModal({ isOpen, onClose }) {
@@ -69,39 +70,44 @@ export function AuthModal({ isOpen, onClose }) {
   };
 
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError('');
     
     if (!validateForm()) return;
     
     setLoading(true);
-    
-    // Simulate API call with timeout
-    setTimeout(() => {
-      try {
-        const userData = {
-          id: '1',
-          email,
-          name: isLogin ? email.split('@')[0] : name,
-          avatar: `https://ui-avatars.com/api/?name=${isLogin ? email.split('@')[0] : name}&background=random`
-        };
-        
-        // Store user data in localStorage for persistence across page refreshes
-        localStorage.setItem('user', JSON.stringify(userData));
-        
-        // Trigger an event that the Navbar component will listen for
-        window.dispatchEvent(new Event('userLoggedIn'));
-        
-        // Close the modal
-        onClose();
-      } catch (error) {
-        setFormError('An error occurred. Please try again.');
-        console.error('Auth error:', error);
-      } finally {
-        setLoading(false);
+
+    const endpoint= isLogin ? '/api/auth/login' : '/api/auth/signup';
+    const payload = isLogin ? {email,password} : {name,email,password}
+
+    try {
+      const res=await fetch(endpoint,{
+        method : 'POST',
+        headers : {
+          'Content-Type' : 'application/json',
+        },
+        body : JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if(!res.ok){
+        throw new Error(data.message || 'something went wrong');
       }
-    }, 1000); // Simulate network delay
+
+    // Save user info (modify according to your backend response)
+    localStorage.setItem('user', JSON.stringify(data.user));
+
+    // Trigger login event for Navbar
+    window.dispatchEvent(new Event('userLoggedIn'));
+
+    // Close modal
+    onClose();
+    }catch (error) {
+      setFormError(error.message);
+      console.error('Auth error:', error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -299,24 +305,24 @@ export function UserMenu({ user, onLogout }) {
       
       {isOpen && (
         <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
-          <a 
+          <Link 
             href="/account" 
             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
           >
             My Account
-          </a>
-          <a 
+          </Link>
+          <Link
             href="/orders" 
             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
           >
             My Orders
-          </a>
-          <a 
+          </Link>
+          <Link
             href="/settings" 
             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
           >
             Settings
-          </a>
+          </Link>
           <button 
             onClick={onLogout}
             className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"

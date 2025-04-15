@@ -360,7 +360,7 @@ export default function Navbar() {
               )}
             </li>
             <li className="border-b border-gray-200">
-              <a href="#wishlist" className="block py-3 text-black px-6">Wishlist</a>
+              <Link href="#wishlist" className="block py-3 text-black px-6">Wishlist</Link>
             </li>
           </ul>
         </div>
