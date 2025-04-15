@@ -5,13 +5,14 @@ import { ShoppingBag, Star, Search, Filter, ChevronDown } from "lucide-react";
 
 const ProductCard = ({ product }) => {
   return (
-    <div className="bg-white border-4 rounded-xl p-3 sm:p-4 hover:shadow-lg transition-shadow duration-300">
-      <div className="relative overflow-hidden rounded-lg bg-gray-50 mb-3 sm:mb-4">
+    <div className="bg-white rounded-xl p-3 sm:p-4 border-1 hover:shadow-lg transition-shadow duration-300">
+      <div className="relative overflow-hidden rounded-lg bg-gray-50 mb-3 sm:mb-4 aspect-square">
         <Image
           src={product.image || `https://via.placeholder.com/300x300?text=${product.name}`}
           alt={product.name}
-          className="w-full aspect-square object-cover transition-transform duration-300 hover:scale-105"
-          fill
+          width={300}
+          height={300}
+          className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
         />
         {product.discount > 0 && (
           <span className="absolute top-2 left-2 bg-[#1a2649] text-white text-[10px] sm:text-xs font-semibold px-2 py-1 rounded">
@@ -46,7 +47,7 @@ const ProductCard = ({ product }) => {
           )}
         </div>
 
-        <button className="w-full px-6 items-center justify-center sm:px-8 py-1.5 sm:py-2 border border-gray-300 rounded text-xs sm:text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer flex duration-300">
+        <button className="px-6 items-center justify-center sm:px-8 py-1.5 sm:py-2 border border-gray-300 rounded text-xs sm:text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer flex duration-300">
           <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
           Add to Cart
         </button>
@@ -105,6 +106,7 @@ const FilterSection = ({ title, options, selectedOptions, onChange }) => {
 const AllProducts = () => {
   // Sample products data - in a real app, you'd fetch this from an API
   const allProducts = [
+    // ... your existing products ...
     {
       name: "Pearl Drop Earrings",
       price: 89.99,
@@ -113,7 +115,7 @@ const AllProducts = () => {
       reviewCount: 126,
       isNew: true,
       discount: 25,
-      image: "/images/pearl-earrings.jpg",
+      image: "/image/product.jpeg",
       category: "earrings",
       colors: ["gold", "silver", "rose-gold"]
     },
@@ -125,7 +127,7 @@ const AllProducts = () => {
       reviewCount: 88,
       isNew: true,
       discount: 20,
-      image: "/images/crystal-necklace.jpg",
+      image: "/image/product.jpeg",
       category: "necklaces",
       colors: ["silver", "gold"]
     },
@@ -137,7 +139,7 @@ const AllProducts = () => {
       reviewCount: 210,
       isNew: false,
       discount: 22,
-      image: "/images/charm-bracelet.jpg",
+      image: "/image/product.jpeg",
       category: "bracelets",
       colors: ["gold", "rose-gold"]
     },
@@ -149,7 +151,7 @@ const AllProducts = () => {
       reviewCount: 75,
       isNew: false,
       discount: 15,
-      image: "/images/diamond-earrings.jpg",
+      image: "/image/product.jpeg",
       category: "earrings",
       colors: ["silver"]
     },
@@ -161,7 +163,7 @@ const AllProducts = () => {
       reviewCount: 63,
       isNew: true,
       discount: 17,
-      image: "/images/sapphire-ring.jpg",
+      image: "/image/product.jpeg",
       category: "rings",
       colors: ["silver", "gold"]
     },
@@ -173,7 +175,7 @@ const AllProducts = () => {
       reviewCount: 92,
       isNew: false,
       discount: 0,
-      image: "/images/gold-chain.jpg",
+      image: "/image/product.jpeg",
       category: "necklaces",
       colors: ["gold"]
     },
@@ -185,7 +187,7 @@ const AllProducts = () => {
       reviewCount: 118,
       isNew: false,
       discount: 18,
-      image: "/images/pearl-necklace.jpg",
+      image: "/image/product.jpeg",
       category: "necklaces",
       colors: ["silver", "gold"]
     },
@@ -197,7 +199,7 @@ const AllProducts = () => {
       reviewCount: 48,
       isNew: true,
       discount: 0,
-      image: "/images/ruby-earrings.jpg",
+      image: "/image/product.jpeg",
       category: "earrings",
       colors: ["gold"]
     },
@@ -209,9 +211,46 @@ const AllProducts = () => {
       reviewCount: 87,
       isNew: false,
       discount: 22,
-      image: "/images/silver-bracelet.jpg",
+      image: "/image/product.jpeg",
       category: "bracelets",
       colors: ["silver"]
+    },
+    // Added extra products to demonstrate load more functionality
+    {
+      name: "Diamond Tennis Bracelet",
+      price: 399.99,
+      originalPrice: 499.99,
+      rating: 4.9,
+      reviewCount: 42,
+      isNew: true,
+      discount: 20,
+      image: "/image/product.jpeg",
+      category: "bracelets",
+      colors: ["silver", "gold"]
+    },
+    {
+      name: "Rose Gold Hoop Earrings",
+      price: 79.99,
+      originalPrice: 99.99,
+      rating: 4.7,
+      reviewCount: 103,
+      isNew: false,
+      discount: 20,
+      image: "/image/product.jpeg",
+      category: "earrings",
+      colors: ["rose-gold"]
+    },
+    {
+      name: "Emerald Pendant",
+      price: 229.99,
+      originalPrice: 279.99,
+      rating: 4.8,
+      reviewCount: 56,
+      isNew: true,
+      discount: 18,
+      image: "/image/product.jpeg",
+      category: "necklaces",
+      colors: ["gold", "silver"]
     }
   ];
 
@@ -221,8 +260,15 @@ const AllProducts = () => {
   const [selectedColors, setSelectedColors] = useState([]);
   const [priceRange, setPriceRange] = useState({ min: 0, max: 500 });
   const [sortBy, setSortBy] = useState("featured");
-  const [filteredProducts, setFilteredProducts] = useState(allProducts);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  
+  // State for pagination
+  const [visibleProducts, setVisibleProducts] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const productsPerPage = 8;
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Effect to filter and sort products
   useEffect(() => {
@@ -278,7 +324,25 @@ const AllProducts = () => {
     }
 
     setFilteredProducts(result);
+    setCurrentPage(1); // Reset to first page when filters change
   }, [searchQuery, selectedCategories, selectedColors, priceRange, sortBy]);
+
+  // Effect to handle pagination
+  useEffect(() => {
+    const endIndex = currentPage * productsPerPage;
+    setVisibleProducts(filteredProducts.slice(0, endIndex));
+    setHasMore(endIndex < filteredProducts.length);
+  }, [filteredProducts, currentPage]);
+
+  const loadMoreProducts = () => {
+    setIsLoading(true);
+    
+    // Simulate network delay for loading more products
+    setTimeout(() => {
+      setCurrentPage(prev => prev + 1);
+      setIsLoading(false);
+    }, 500);
+  };
 
   const categoryOptions = [
     { label: "Earrings", value: "earrings" },
@@ -294,15 +358,12 @@ const AllProducts = () => {
   ];
 
   return (
-    <section className="bg-white py-8 sm:py-12 lg:py-16 mt-24">
+    <section className="bg-white py-8 sm:py-12 lg:py-16 ">
       <div className="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header Section */}
-        <div className="text-center mb-8 sm:mb-12">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#1a2649]">
-            All Products
-          </h1>
-          <p className="mt-2 text-base sm:text-lg text-gray-600 max-w-2xl mx-auto">
-            Explore our complete collection of exquisite jewelry pieces
+        <div className="text-center mt-28 mb-8 sm:mb-12">
+          <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto">
+            Explore our complete collection of Products.
           </p>
         </div>
 
@@ -427,16 +488,29 @@ const AllProducts = () => {
             ) : (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                  {filteredProducts.map((product, idx) => (
+                  {visibleProducts.map((product, idx) => (
                     <div key={idx}>
                       <ProductCard product={product} />
                     </div>
                   ))}
                 </div>
                 
+                {/* Load More Button */}
+                {hasMore && (
+                  <div className="mt-8 text-center">
+                    <button
+                      onClick={loadMoreProducts}
+                      disabled={isLoading}
+                      className="px-8 py-2 bg-[#1a2649] text-white rounded-lg hover:bg-opacity-90 transition-colors disabled:bg-opacity-70 disabled:cursor-not-allowed"
+                    >
+                      {isLoading ? 'Loading...' : 'Load More Products'}
+                    </button>
+                  </div>
+                )}
+                
                 {/* Products count */}
                 <div className="mt-6 text-sm text-gray-600">
-                  Showing {filteredProducts.length} of {allProducts.length} products
+                  Showing {visibleProducts.length} of {filteredProducts.length} products
                 </div>
               </>
             )}
