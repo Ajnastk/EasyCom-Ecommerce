@@ -18,7 +18,16 @@ export async function POST(req) {
     return NextResponse.json({ error: "Invalid password" }, { status: 401 });
   }
   const token = CreateJwt(user);
-  const res = NextResponse.json({ success: true }, { status: 200 });
+
+  //create user object without sensitive data
+  const safeUser ={
+    _id : user._id,
+    name : user.name,
+    email : user.email,
+    password : user.password,
+    role : user.role,
+  }
+  const res = NextResponse.json({ success: true, user: safeUser}, { status: 200 });
 
   res.headers.set(
     "Set-Cookie",
