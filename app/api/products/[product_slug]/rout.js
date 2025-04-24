@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
-import ProductSchema from "@models/Product";
+import {ProductSchema} from "@models/Product";
 
 // Get single Product
 export async function GET(request, { params }) {
