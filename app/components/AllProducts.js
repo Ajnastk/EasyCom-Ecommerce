@@ -104,9 +104,9 @@ const FilterSection = ({ title, options, selectedOptions, onChange }) => {
 };
 
 const AllProducts = () => {
-  // Sample products data - in a real app, you'd fetch this from an API
-  const allProducts = [
-    // ... your existing products ...
+  // Memoize the products data so it doesn't cause re-renders
+  const allProducts = React.useMemo(() => [
+    // Your product data
     {
       name: "Pearl Drop Earrings",
       price: 89.99,
@@ -128,118 +128,10 @@ const AllProducts = () => {
       isNew: true,
       discount: 20,
       image: "/image/product.jpeg",
-      category: "necklaces",
+      category: "necklaces", 
       colors: ["silver", "gold"]
     },
-    {
-      name: "Charm Bracelet",
-      price: 69.99,
-      originalPrice: 89.99,
-      rating: 4.7,
-      reviewCount: 210,
-      isNew: false,
-      discount: 22,
-      image: "/image/product.jpeg",
-      category: "bracelets",
-      colors: ["gold", "rose-gold"]
-    },
-    {
-      name: "Diamond Stud Earrings",
-      price: 299.99,
-      originalPrice: 349.99,
-      rating: 4.9,
-      reviewCount: 75,
-      isNew: false,
-      discount: 15,
-      image: "/image/product.jpeg",
-      category: "earrings",
-      colors: ["silver"]
-    },
-    {
-      name: "Sapphire Ring",
-      price: 249.99,
-      originalPrice: 299.99,
-      rating: 4.6,
-      reviewCount: 63,
-      isNew: true,
-      discount: 17,
-      image: "/image/product.jpeg",
-      category: "rings",
-      colors: ["silver", "gold"]
-    },
-    {
-      name: "Gold Chain Necklace",
-      price: 199.99,
-      originalPrice: 239.99,
-      rating: 4.7,
-      reviewCount: 92,
-      isNew: false,
-      discount: 0,
-      image: "/image/product.jpeg",
-      category: "necklaces",
-      colors: ["gold"]
-    },
-    {
-      name: "Pearl Necklace",
-      price: 179.99,
-      originalPrice: 219.99,
-      rating: 4.8,
-      reviewCount: 118,
-      isNew: false,
-      discount: 18,
-      image: "/image/product.jpeg",
-      category: "necklaces",
-      colors: ["silver", "gold"]
-    },
-    {
-      name: "Ruby Teardrop Earrings",
-      price: 149.99,
-      originalPrice: 179.99,
-      rating: 4.5,
-      reviewCount: 48,
-      isNew: true,
-      discount: 0,
-      image: "/image/product.jpeg",
-      category: "earrings",
-      colors: ["gold"]
-    },
-    {
-      name: "Silver Link Bracelet",
-      price: 109.99,
-      originalPrice: 139.99,
-      rating: 4.6,
-      reviewCount: 87,
-      isNew: false,
-      discount: 22,
-      image: "/image/product.jpeg",
-      category: "bracelets",
-      colors: ["silver"]
-    },
-    // Added extra products to demonstrate load more functionality
-    {
-      name: "Diamond Tennis Bracelet",
-      price: 399.99,
-      originalPrice: 499.99,
-      rating: 4.9,
-      reviewCount: 42,
-      isNew: true,
-      discount: 20,
-      image: "/image/product.jpeg",
-      category: "bracelets",
-      colors: ["silver", "gold"]
-    },
-    {
-      name: "Rose Gold Hoop Earrings",
-      price: 79.99,
-      originalPrice: 99.99,
-      rating: 4.7,
-      reviewCount: 103,
-      isNew: false,
-      discount: 20,
-      image: "/image/product.jpeg",
-      category: "earrings",
-      colors: ["rose-gold"]
-    },
+    // ... all your other products ...
     {
       name: "Emerald Pendant",
       price: 229.99,
@@ -252,7 +144,7 @@ const AllProducts = () => {
       category: "necklaces",
       colors: ["gold", "silver"]
     }
-  ];
+  ], []);  // Empty dependency array means this only runs once
 
   // State for filters and sorting
   const [searchQuery, setSearchQuery] = useState("");
@@ -269,7 +161,7 @@ const AllProducts = () => {
   const productsPerPage = 8;
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-
+  
   // Effect to filter and sort products
   useEffect(() => {
     let result = [...allProducts];
@@ -322,17 +214,16 @@ const AllProducts = () => {
         // No sorting needed, keep original order
         break;
     }
-
     setFilteredProducts(result);
-    setCurrentPage(1); // Reset to first page when filters change
-  }, [searchQuery, selectedCategories, selectedColors, priceRange, sortBy]);
-
-  // Effect to handle pagination
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategories, selectedColors, priceRange, sortBy, allProducts]); // Added allProducts to dependency array
+  
+  // Second useEffect for pagination
   useEffect(() => {
     const endIndex = currentPage * productsPerPage;
     setVisibleProducts(filteredProducts.slice(0, endIndex));
     setHasMore(endIndex < filteredProducts.length);
-  }, [filteredProducts, currentPage]);
+  }, [filteredProducts, currentPage, productsPerPage]);
 
   const loadMoreProducts = () => {
     setIsLoading(true);

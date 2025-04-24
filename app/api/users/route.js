@@ -3,7 +3,7 @@ import React from 'react'
 const route = () => {
   return (
     <div>
-      <h1>xziyad</h1>
+      <h1>ziyad</h1>
     </div>
   )
 }

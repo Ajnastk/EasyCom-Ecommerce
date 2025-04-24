@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
-import {CategorySchema} from "@/models/Catgory";
+import categoryModel from "@/lib/models/Category";
 
 // GET all categories
 export async function GET() {
   try {
     await dbConnect();
-    const categories = await CategorySchema.find({});
+    const categories = await categoryModel.find({});
     return NextResponse.json(categories);
   } catch (error) {
     return NextResponse.json(
@@ -21,7 +21,7 @@ export async function POST(request) {
   try {
     await dbConnect();
     const body = await request.json();
-    const category = await CategorySchema.create(body);
+    const category = await categoryModel.create(body);
     return NextResponse.json(category, { status: 201 });
   } catch (error) {
     return NextResponse.json(

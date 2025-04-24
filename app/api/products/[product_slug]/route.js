@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
-import {ProductSchema} from "@models/Product";
+import productModel from "@/lib/models/Product";
 
 // Get single Product
 export async function GET(request, { params }) {
   try {
     await dbConnect();
-    const product = await ProductSchema.findById(params.id);
+    const product = await productModel.findById(params.id);
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
@@ -19,13 +19,13 @@ export async function GET(request, { params }) {
   }
 }
 
-// Update porduct
+// Update product
 export async function PUT(request, { params }) {
   try {
     await dbConnect();
     const body = await request.json();
-    const product = await ProductSchema.findByIdAndUpdate(params.id, body, {
-      new: ture,
+    const product = await productModel.findByIdAndUpdate(params.id, body, {
+      new: true,
     });
     return NextResponse.json(product);
   } catch (error) {
@@ -40,7 +40,7 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     await dbConnect();
-    await ProductSchema.findByIdAndDelete(params.id);
+    await productModel.findByIdAndDelete(params.id);
     return NextResponse.json(
       { message: "Product deleted Successfully" },
       { status: 200 }
