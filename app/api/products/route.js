@@ -1,12 +1,12 @@
 import dbConnect from "@/lib/mongodb";
 import { NextResponse } from "next/server";
-import {ProductSchema} from "@/lib/models/Product";
+import productModel from "@/lib/models/Product";
 
 // Get all Products
 export async function GET() {
   try {
     await dbConnect();
-    const products = await ProductSchema.find({});
+    const products = await productModel.find({});
     return NextResponse.json(products);
   } catch (error) {
     return NextResponse.json(
@@ -21,7 +21,7 @@ export async function POST() {
   try {
     await dbConnect();
     const body = await request.json();
-    const product = await ProductSchema.create(body);
+    const product = await productModel.create(body);
     return NextResponse.json(product, { status: 201 });
   } catch (error) {
     return NextResponse.json(
