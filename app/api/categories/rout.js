@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
-import CategorySchema from "@/models/Catgory";
+import {CategorySchema} from "@/models/Catgory";
 
 // GET all categories
 export async function GET() {
