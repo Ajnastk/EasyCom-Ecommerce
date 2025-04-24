@@ -105,6 +105,20 @@ const TopProducts = () => {
         { name: "Gold", value: "bg-amber-200" },
         { name: "Rose Gold", value: "bg-rose-200" }
       ]
+    },
+    {
+      name: "Charm Bracelet",
+      price: 69.99,
+      originalPrice: 89.99,
+      rating: 4.7,
+      reviewCount: 210,
+      isNew: false,
+      discount: 22,
+      image: "/image/product.jpeg",
+      colors: [
+        { name: "Gold", value: "bg-amber-200" },
+        { name: "Rose Gold", value: "bg-rose-200" }
+      ]
     }
   ];
 
