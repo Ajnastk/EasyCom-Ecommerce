@@ -1,12 +1,12 @@
 import dbConnect from "@/lib/mongodb";
 import { NextResponse } from "next/server";
-import CategorySchema from "@/models/Catgory";
+import categoryModel from "@/lib/models/Category";
 
 //  Get single category
 export async function GET(request, { params }) {
   try {
     await dbConnect();
-    const category = await CategorySchema.findById(params.id);
+    const category = await categoryModel.findById(params.id);
     if (!category) {
       return NextResponse.json(
         { error: "Category not found" },
@@ -29,7 +29,7 @@ export async function PUT(request, { params }) {
     try {
       await dbConnect();
       const body = await request.json();
-      const category = await CategorySchema.findByIdAndUpdate(params.id, body, {
+      const category = await categoryModel.findByIdAndUpdate(params.id, body, {
         new: true,
       });
       return NextResponse.json(category);
@@ -48,7 +48,7 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
     try {
       await dbConnect();
-      await CategorySchema.findByIdAndDelete(params.id);
+      await categoryModel.findByIdAndDelete(params.id);
       return NextResponse.json(
         { message: 'Category deleted successfully' },
         { status: 200 }
