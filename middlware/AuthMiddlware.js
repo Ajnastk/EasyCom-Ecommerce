@@ -1,24 +1,27 @@
 import { NextResponse } from "next/server";
-import { VerifyJwt } from "@/lib/Jwt";
+import { getToken } from "next-auth/jwt";
 
-export function middleware(req) {
-  const token = req.cookies.get("token")?.value;
-  const user = VerifyJwt(token);
+export async function middleware(req) {
+  //Get the token using NextAuth's getToken helper
+  const token = await getToken({
+    req,
+    secret:process.env.JWT_SECRET
+  });
 
   const { pathname } = req.nextUrl;
 
   // Redirect unauthenticated users trying to access protected pages
-  if (!user) {
+  if (!token) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
   // Admin-only protection
-  if (pathname.startsWith("/admin") && user.role !== "admin") {
+  if (pathname.startsWith("/admin") && token.role !== "admin") {
     return NextResponse.redirect(new URL("/unauthorized", req.url));
   }
 
   // User-only protection (optional)
-  if (pathname.startsWith("/user") && user.role !== "user") {
+  if (pathname.startsWith("/user") && token.role !== "user") {
     return NextResponse.redirect(new URL("/unauthorized", req.url));
   }
 

@@ -14,35 +14,23 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 export default function AccountPage() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const {data : session,status} =useSession();
   const [activeTab, setActiveTab] = useState("profile");
   const router = useRouter();
 
-  useEffect(() => {
-    // Get user data from localStorage
-    const getUserData = () => {
-      const userData = localStorage.getItem("user");
-      if (userData) {
-        try {
-          const parsedUser = JSON.parse(userData);
-          setUser(parsedUser);
-        } catch (error) {
-          console.error("Error parsing user data:", error);
-          // Redirect to login if user data is invalid
-          router.push("/");
-        }
-      } else {
-        // Redirect to login if no user data found
-        router.push("/");
-      }
-      setLoading(false);
-    };
+  if(status === "loading"){
+    return <div>Loading ....</div>
+  }
 
-    getUserData();
-  }, [router]);
+  if(status === 'authenticated'){
+    router.push("/");
+    return null;
+  }
+
+  const user = session?.user;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -60,7 +48,6 @@ export default function AccountPage() {
     
     // Create updated user object
     const updatedUser = {
-      ...user,
       name: fullName,
       email: email,
       phone: phone,
@@ -71,17 +58,22 @@ export default function AccountPage() {
         state: state,
         zip: zip,
         country: country
-      }
+      },
     };
-    
-    // Update localStorage
-    localStorage.setItem("user", JSON.stringify(updatedUser));
-    
-    // Update state
-    setUser(updatedUser);
-    
-    // Optional: Show success message
-    alert("Profile updated successfully!");
+
+    try{
+      //Directly update session locally
+       update({
+        user:{
+          ...updatedUser,
+        },
+      });
+
+      alert("Profile updated successfully!");
+    }catch(error){
+      console.error("Error updating profile:",error);
+      alert("Failed to update profile")
+    }
   };
 
   //   const handleLogout = () => {
@@ -498,10 +490,6 @@ export default function AccountPage() {
                       <p className="text-gray-500 mb-4">
                         You haven&apos;t placed any orders yet.
                       </p>
-                      <Link
-
-                      <h3 className="text-lg font-medium text-gray-900 mb-1">No orders yet</h3>
-                      <p className="text-gray-500 mb-4">You haven&apos;t placed any orders yet.</p>
                       <Link 
 
                         href="/products"

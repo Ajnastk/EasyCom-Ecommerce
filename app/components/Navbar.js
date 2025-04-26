@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from 'next/navigation';
 import { AuthModal, UserMenu } from './AuthModal'; // Import the auth components
 import Image from "next/image";
+import { useSession, signOut } from "next-auth/react";
 
 export default function Navbar() {
   const [click, setClick] = useState(false);
@@ -19,7 +20,10 @@ export default function Navbar() {
   
   // Auth state
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [user, setUser] = useState(null);
+  const { data: session, status } = useSession();
+  const user = session?.user;
+  const isLoading = status === "loading";
+  const isAuthenticated = status === "authenticated";
   
   // Main navigation categories
   const navLinks = [
@@ -32,43 +36,17 @@ export default function Navbar() {
     { name: "Contact", type: isHomePage ? "scroll" : "link", id: "contact", path: "/#contact" }
   ];
   
-  // Check for user on load and set up event listener for login
-  useEffect(() => {
-    // Check if user is logged in from localStorage
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error('Error parsing user data:', error);
-        localStorage.removeItem('user');
-      }
-    }
-    
-    // Listen for login events
-    const handleLogin = () => {
-      const userData = localStorage.getItem('user');
-      if (userData) {
-        setUser(JSON.parse(userData));
-      }
-    };
-    
-    window.addEventListener('userLoggedIn', handleLogin);
-    
-    return () => {
-      window.removeEventListener('userLoggedIn', handleLogin);
-    };
-  }, []);
-  
   // Handle logout
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    setUser(null);
+  const handleLogout = async () => {
+    await signOut({ redirect:false})
   };
+
+
   
   const handleClick = () => setClick(!click);
   const toggleSearch = () => setSearchOpen(!searchOpen);
   const openAuthModal = () => setAuthModalOpen(true);
+  const closeAuthModal = () => setAuthModalOpen(false);
 
   // Check if we're on a mobile device
   useEffect(() => {
@@ -146,6 +124,19 @@ export default function Navbar() {
       section.scrollIntoView({ behavior: 'smooth' });
     }
   }, []);
+
+    // Add the throttle function that was missing
+    function throttle(func, delay) {
+      let lastCall = 0;
+      return function(...args) {
+        const now = new Date().getTime();
+        if (now - lastCall < delay) {
+          return;
+        }
+        lastCall = now;
+        return func(...args);
+      };
+    }
 
   return (
     <div className="w-full fixed top-0 left-0 z-50">
@@ -369,28 +360,8 @@ export default function Navbar() {
       {/* Auth Modal */}
       <AuthModal 
         isOpen={authModalOpen} 
-        onClose={() => setAuthModalOpen(false)}
+        onClose={closeAuthModal}
       />
     </div>
   );
-}
-
-// Utility function for throttling
-function throttle(func, limit) {
-  let lastFunc;
-  let lastRan;
-  return function(...args) {
-    if (!lastRan) {
-      func.apply(this, args);
-      lastRan = Date.now();
-    } else {
-      clearTimeout(lastFunc);
-      lastFunc = setTimeout(() => {
-        if ((Date.now() - lastRan) >= limit) {
-          func.apply(this, args);
-          lastRan = Date.now();
-        }
-      }, limit - (Date.now() - lastRan));
-    }
-  };
 }
