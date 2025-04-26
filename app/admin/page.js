@@ -1,7 +1,4 @@
 'use client';
-// import SalesChart from '@/components/admin/Charts/SalesChart';
-// import StatsCards from '@/components/admin/StatsCards';
-// import RecentOrders from '@/components/admin/RecentOrders';
 
 export default function Dashboard() {
   return (
