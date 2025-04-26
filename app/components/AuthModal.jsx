@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import { Eye, EyeOff, Mail, Lock, User, X, ChevronRight } from 'lucide-react';
 import Link from "next/link";
+import { signIn,signOut,useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 // Auth Modal Component - to be imported in your Navbar
 export function AuthModal({ isOpen, onClose }) {
@@ -13,6 +15,7 @@ export function AuthModal({ isOpen, onClose }) {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState('');
+  const router = useRouter();
   
   // Toggle between login and signup forms
   const toggleForm = () => {
@@ -77,38 +80,61 @@ export function AuthModal({ isOpen, onClose }) {
     if (!validateForm()) return;
     
     setLoading(true);
-
-    const endpoint= isLogin ? '/api/auth/login' : '/api/auth/signup';
-    const payload = isLogin ? {email,password} : {name,email,password}
-
+    if(isLogin){
     try {
-      const res=await fetch(endpoint,{
-        method : 'POST',
-        headers : {
-          'Content-Type' : 'application/json',
-        },
-        body : JSON.stringify(payload),
+      const res=await signIn('credentials',{
+        redirect :false,
+        email,
+        password
       });
-      const data = await res.json();
-      if(!res.ok){
-        throw new Error(data.message || 'something went wrong');
+      if(res.error){
+        throw new Error(res.error);
       }
 
-    // Save user info (modify according to your backend response)
-    localStorage.setItem('user', JSON.stringify(data.user));
-
-    // Trigger login event for Navbar
-    window.dispatchEvent(new Event('userLoggedIn'));
-
-    // Close modal
+    // Close modal on successfull login 
     onClose();
+    router.refresh();
     }catch (error) {
-      setFormError(error.message);
+      setFormError(error.message || 'failed to sign in');
       console.error('Auth error:', error.message);
     } finally {
       setLoading(false);
     }
-  };
+  } else {
+    //Handle signup - still need to use your API route for registration
+    try{
+      const res=await fetch('/api/auth/signup',{
+        method:'POST',
+        headers:{
+          'Content-Type' : 'application/json',
+        },
+        body :JSON.stringify({name,email,password}),
+      });
+
+      const data=await res.json();
+      if(!res.ok){
+        throw new Error(data.message || 'Something went wrong');
+      }
+      //Auto login after successfull signup
+      const signInResult = await signIn('credentials',{
+        redirect:false,
+        email,
+        password
+      });
+      if(signInResult.error){
+        throw new Error(signInResult.error);
+      }
+      //close modal on successfull signup and login
+      onClose();
+      router.refresh();
+    }catch(error){
+      setFormError(error.message);
+      console.error('Auth Error:',error.message);
+    }finally{
+      setLoading(false);
+    }
+  }
+};
 
   if (!isOpen) return null;
 
@@ -272,8 +298,10 @@ export function AuthModal({ isOpen, onClose }) {
 }
 
 // User Menu Component - shown when user is logged in
-export function UserMenu({ user, onLogout }) {
+export function UserMenu() {
   const [isOpen, setIsOpen] = useState(false);
+  const {data : session} = useSession();
+  const router = useRouter();
   
   // Close menu when clicking outside
   useEffect(() => {
@@ -287,6 +315,12 @@ export function UserMenu({ user, onLogout }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
+  const handleLogout = async ()=>{
+    await signOut({redirect : false});
+    router.refresh();
+  };
+  if(!session) return null;
+
   return (
     <div className="relative user-menu">
       <button 
@@ -296,11 +330,11 @@ export function UserMenu({ user, onLogout }) {
         aria-haspopup="true"
       >
         <img 
-          src={user.avatar}
-          alt={user.name}
+          src={session.user.avatar}
+          alt={session.user.name}
           className="w-8 h-8 rounded-full border-2 border-gray-200"
         />
-        <span className="ml-2 hidden md:block">{user.name}</span>
+        <span className="ml-2 hidden md:block">{session.user.name}</span>
       </button>
       
       {isOpen && (
@@ -324,7 +358,7 @@ export function UserMenu({ user, onLogout }) {
             Settings
           </Link> */}
           <button 
-            onClick={onLogout}
+            onClick={handleLogout}
             className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
           >
             Sign Out
