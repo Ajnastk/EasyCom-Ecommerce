@@ -1,7 +1,9 @@
+"use client"
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import { usePathname } from 'next/navigation'; // <-- Important
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,12 +16,18 @@ const geistMono = Geist_Mono({
 });
 
 export default function RootLayout({ children }) {
+  const pathname = usePathname();
+
+  const isAdminRoute = pathname.startsWith('/admin');
+
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <Navbar />
+        {!isAdminRoute && <Navbar />}
+        
         {children}
-        <Footer />
+        
+        {!isAdminRoute && <Footer />}
       </body>
     </html>
   );
