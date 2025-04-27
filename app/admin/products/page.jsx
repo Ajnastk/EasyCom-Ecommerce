@@ -1,65 +1,66 @@
-'use client'
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { Search, Plus, Edit, Trash, ChevronLeft, ChevronRight } from 'lucide-react';
+"use client";
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import {
+  Search,
+  Plus,
+  Edit,
+  Trash,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
 export default function ProductsAdmin() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
-    // In a real app, you would fetch from your API
     fetchProducts();
   }, [currentPage, searchTerm]);
 
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      // This is a mock API call - replace with your actual API endpoint
-      // const res = await fetch(`/api/admin/products?page=${currentPage}&search=${searchTerm}`);
-      // const data = await res.json();
-      
-      // Mock data for demonstration
-      setTimeout(() => {
-        const mockProducts = [
-          { id: 1, name: 'Premium Headphones', price: 199.99, stock: 45, category: 'Electronics', status: 'active' },
-          { id: 2, name: 'Wireless Keyboard', price: 59.99, stock: 32, category: 'Electronics', status: 'active' },
-          { id: 3, name: 'Ergonomic Chair', price: 249.99, stock: 12, category: 'Furniture', status: 'active' },
-          { id: 4, name: 'Smart Watch', price: 149.99, stock: 28, category: 'Electronics', status: 'active' },
-          { id: 5, name: 'Desk Lamp', price: 39.99, stock: 50, category: 'Home', status: 'inactive' },
-          { id: 6, name: 'Laptop Stand', price: 29.99, stock: 18, category: 'Office', status: 'active' },
-        ].filter(product => 
-          product.name.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-        
-        setProducts(mockProducts);
-        setTotalPages(3); // Mock total pages
-        setLoading(false);
-      }, 500);
-      
+      const response = await fetch(
+        `/api/products?page=${currentPage}&search=${searchTerm}`
+      );
+      const data = await response.json();
+
+      if (response.ok) {
+        setProducts(data.products);
+        setTotalPages(data.totalPages);
+      } else {
+        throw new Error(data.error || "Failed to fetch products");
+      }
     } catch (error) {
-      console.error('Error fetching products:', error);
+      console.error("Error fetching products:", error);
+      alert(error.message);
+    } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (productId) => {
-    if (confirm('Are you sure you want to delete this product?')) {
+    if (confirm("Are you sure you want to delete this product?")) {
       try {
-        // This is a mock API call - replace with your actual API endpoint
-        // await fetch(`/api/admin/products/${productId}`, {
-        //   method: 'DELETE',
-        // });
-        
-        // Optimistic UI update
-        setProducts(products.filter(product => product.id !== productId));
-        alert('Product deleted successfully');
+        const response = await fetch(`/api/products/${productId}`, {
+          method: "DELETE",
+        });
+
+        if (response.ok) {
+          // Optimistic UI update
+          setProducts(products.filter((product) => product._id !== productId));
+          alert("Product deleted successfully");
+        } else {
+          const error = await response.json();
+          throw new Error(error.error || "Failed to delete product");
+        }
       } catch (error) {
-        console.error('Error deleting product:', error);
-        alert('Failed to delete product');
+        console.error("Error deleting product:", error);
+        alert(error.message);
       }
     }
   };
@@ -69,18 +70,20 @@ export default function ProductsAdmin() {
       setCurrentPage(newPage);
     }
   };
-
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Products</h1>
-          <Link href="/admin/products/new" className="bg-indigo-600 text-white px-4 py-2 rounded-md flex items-center hover:bg-indigo-700 transition-colors">
+          <Link
+            href="/admin/products/new"
+            className="bg-indigo-600 text-white px-4 py-2 rounded-md flex items-center hover:bg-indigo-700 transition-colors"
+          >
             <Plus className="w-4 h-4 mr-2" />
             Add Product
           </Link>
         </div>
-        
+
         <div className="bg-white shadow rounded-lg overflow-hidden">
           {/* Search and filters */}
           <div className="p-4 border-b border-gray-200">
@@ -99,28 +102,46 @@ export default function ProductsAdmin() {
               </div>
             </div>
           </div>
-          
+
           {/* Product table */}
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Product
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Price
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Stock
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Category
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Status
                   </th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Actions
                   </th>
                 </tr>
@@ -128,13 +149,19 @@ export default function ProductsAdmin() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {loading ? (
                   <tr>
-                    <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">
+                    <td
+                      colSpan="6"
+                      className="px-6 py-4 text-center text-sm text-gray-500"
+                    >
                       Loading products...
                     </td>
                   </tr>
                 ) : products.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">
+                    <td
+                      colSpan="6"
+                      className="px-6 py-4 text-center text-sm text-gray-500"
+                    >
                       No products found
                     </td>
                   </tr>
@@ -142,32 +169,49 @@ export default function ProductsAdmin() {
                   products.map((product) => (
                     <tr key={product.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                        <div className="text-sm text-gray-500">ID: {product.id}</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {product.name}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          ID: {product.id}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">${product.price.toFixed(2)}</div>
+                        <div className="text-sm text-gray-900">
+                          ${product.price.toFixed(2)}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{product.stock}</div>
+                        <div className="text-sm text-gray-900">
+                          {product.stock}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{product.category}</div>
+                        <div className="text-sm text-gray-900">
+                          {product.category}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          product.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}>
+                        <span
+                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            product.status === "active"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
                           {product.status}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end space-x-2">
-                          <Link href={`/admin/products/${product.id}/edit`} className="text-indigo-600 hover:text-indigo-900">
+                          <Link
+                            href={`/admin/products/${product.id}/edit`}
+                            className="text-indigo-600 hover:text-indigo-900"
+                          >
                             <Edit className="w-5 h-5" />
                           </Link>
-                          <button 
-                            onClick={() => handleDelete(product.id)} 
+                          <button
+                            onClick={() => handleDelete(product.id)}
                             className="text-red-600 hover:text-red-900"
                           >
                             <Trash className="w-5 h-5" />
@@ -180,7 +224,7 @@ export default function ProductsAdmin() {
               </tbody>
             </table>
           </div>
-          
+
           {/* Pagination */}
           <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
             <div className="flex-1 flex justify-between sm:hidden">
@@ -188,7 +232,9 @@ export default function ProductsAdmin() {
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
                 className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
-                  currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'
+                  currentPage === 1
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-gray-700 hover:bg-gray-50"
                 }`}
               >
                 Previous
@@ -197,7 +243,9 @@ export default function ProductsAdmin() {
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
                 className={`ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
-                  currentPage === totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'
+                  currentPage === totalPages
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-gray-700 hover:bg-gray-50"
                 }`}
               >
                 Next
@@ -206,17 +254,23 @@ export default function ProductsAdmin() {
             <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm text-gray-700">
-                  Showing page <span className="font-medium">{currentPage}</span> of{' '}
+                  Showing page{" "}
+                  <span className="font-medium">{currentPage}</span> of{" "}
                   <span className="font-medium">{totalPages}</span> pages
                 </p>
               </div>
               <div>
-                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                <nav
+                  className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                  aria-label="Pagination"
+                >
                   <button
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
                     className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${
-                      currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:bg-gray-50'
+                      currentPage === 1
+                        ? "text-gray-300 cursor-not-allowed"
+                        : "text-gray-500 hover:bg-gray-50"
                     }`}
                   >
                     <span className="sr-only">Previous</span>
@@ -228,8 +282,8 @@ export default function ProductsAdmin() {
                       onClick={() => handlePageChange(i + 1)}
                       className={`relative inline-flex items-center px-4 py-2 border ${
                         currentPage === i + 1
-                          ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600'
-                          : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                          ? "z-10 bg-indigo-50 border-indigo-500 text-indigo-600"
+                          : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
                       } text-sm font-medium`}
                     >
                       {i + 1}
@@ -239,7 +293,9 @@ export default function ProductsAdmin() {
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
                     className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${
-                      currentPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:bg-gray-50'
+                      currentPage === totalPages
+                        ? "text-gray-300 cursor-not-allowed"
+                        : "text-gray-500 hover:bg-gray-50"
                     }`}
                   >
                     <span className="sr-only">Next</span>
