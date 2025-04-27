@@ -113,7 +113,7 @@ export function AuthModal({ isOpen, onClose }) {
 
       const data=await res.json();
       if(!res.ok){
-        throw new Error(data.message || 'Something went wrong');
+        throw new Error(data.message || data.error || 'Something went wrong');
       }
       //Auto login after successfull signup
       const signInResult = await signIn('credentials',{
