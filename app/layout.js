@@ -29,16 +29,12 @@ export default function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
       <Providers>
-       <Navbar/>
-       {children}
-       <Footer/>
+      {!isAdminRoute && <Navbar />}
+        {children}
+      {!isAdminRoute && <Footer />}
        </Providers>
 
-//         {!isAdminRoute && <Navbar />}
-        
-//         {children}
-        
-//         {!isAdminRoute && <Footer />}
+
 
       </body>
     </html>
