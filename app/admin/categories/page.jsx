@@ -17,28 +17,22 @@ export default function CategoriesAdmin() {
   const fetchCategories = async () => {
     setLoading(true)
     try {
-      // Mock API call
-      setTimeout(() => {
-        const mockCategories = [
-          { id: 1, name: 'Electronics', slug: 'electronics', productCount: 42, status: 'active' },
-          { id: 2, name: 'Clothing', slug: 'clothing', productCount: 36, status: 'active' },
-          { id: 3, name: 'Home & Garden', slug: 'home-garden', productCount: 28, status: 'active' },
-          { id: 4, name: 'Books', slug: 'books', productCount: 15, status: 'active' },
-          { id: 5, name: 'Toys', slug: 'toys', productCount: 22, status: 'inactive' },
-          { id: 6, name: 'Sports', slug: 'sports', productCount: 18, status: 'active' },
-        ].filter(category => 
-          category.name.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-        
-        setCategories(mockCategories)
-        setTotalPages(3)
-        setLoading(false)
-      }, 500)
+      const res = await fetch(`/api/categories`)
+      const data = await res.json()
+  
+      const filtered = data.filter(category =>
+        category.name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+  
+      setCategories(filtered)
+      setTotalPages(2) // Optional: calculate total pages based on result length
+      setLoading(false)
     } catch (error) {
       console.error('Error fetching categories:', error)
       setLoading(false)
     }
   }
+  
 
   const handleDelete = async (categoryId) => {
     if (confirm('Are you sure you want to delete this category?')) {

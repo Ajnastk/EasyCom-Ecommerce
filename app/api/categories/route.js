@@ -19,6 +19,8 @@ export async function GET() {
 // POST new category
 export async function POST(request) {
   try {
+    console.log("add category started");
+    
     await dbConnect();
     const body = await request.json();
     const category = await categoryModel.create(body);

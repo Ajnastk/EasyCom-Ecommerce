@@ -11,41 +11,66 @@ export default function AddCategory() {
     name: '',
     slug: '',
     description: '',
-    status: 'active',
-    featured: false
+    // status: 'active',
+    // featured: false
   })
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }))
+
+    // Auto-generate slug from name
+    if (name === 'name') {
+      const generatedSlug = value
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '')
+      setFormData(prev => ({
+        ...prev,
+        name: value,
+        slug: generatedSlug
+      }))
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value
+      }))
+    }
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
-    
+
     try {
-      // Mock API call
-      setTimeout(() => {
-        alert('Category created successfully!')
-        router.push('/admin/categories')
-      }, 1000)
+      const res = await fetch('/api/categories', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      })
+
+      if (!res.ok) throw new Error('Something went wrong')
+
+      const data = await res.json()
+      alert('Category created successfully!')
+      router.push('/admin/categories')
     } catch (error) {
       console.error('Error creating category:', error)
+      alert('Failed to create category. Please try again.')
       setLoading(false)
     }
   }
+
+  const isFormValid = formData.name && formData.slug
 
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center">
-            <Link 
-              href="/admin/categories" 
+            <Link
+              href="/admin/categories"
               className="mr-4 text-gray-500 hover:text-gray-700"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -54,8 +79,8 @@ export default function AddCategory() {
           </div>
           <button
             type="button"
-            onClick={() => document.getElementById('category-form').submit()}
-            disabled={loading}
+            onClick={() => document.getElementById('category-form').requestSubmit()}
+            disabled={loading || !isFormValid}
             className={`inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
               loading ? 'bg-indigo-400' : 'bg-indigo-600 hover:bg-indigo-700'
             } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
@@ -122,7 +147,7 @@ export default function AddCategory() {
                   />
                 </div>
 
-                <div className="sm:col-span-3">
+                {/* <div className="sm:col-span-3">
                   <label htmlFor="status" className="block text-sm font-medium text-gray-700">
                     Status
                   </label>
@@ -136,9 +161,9 @@ export default function AddCategory() {
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
                   </select>
-                </div>
+                </div> */}
 
-                <div className="sm:col-span-6">
+                {/* <div className="sm:col-span-6">
                   <div className="flex items-center">
                     <input
                       id="featured"
@@ -152,7 +177,7 @@ export default function AddCategory() {
                       Featured Category
                     </label>
                   </div>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>
@@ -166,7 +191,7 @@ export default function AddCategory() {
             </Link>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !isFormValid}
               className={`ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white ${
                 loading ? 'bg-indigo-400' : 'bg-indigo-600 hover:bg-indigo-700'
               } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
