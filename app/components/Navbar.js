@@ -17,7 +17,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const isHomePage = pathname === '/' || pathname === '/#';
   
-  // Auth state
+  // Auth state 
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [user, setUser] = useState(null);
   
