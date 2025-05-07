@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Search,
   Plus,
@@ -24,12 +25,12 @@ export default function ProductsAdmin() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const response = await fetch(
+      const res = await fetch(
         `/api/products?page=${currentPage}&search=${searchTerm}`
       );
-      const data = await response.json();
+      const data = await res.json();
 
-      if (response.ok) {
+      if (res.ok) {
         setProducts(data.products);
         setTotalPages(data.totalPages);
       } else {
@@ -51,8 +52,8 @@ export default function ProductsAdmin() {
         });
 
         if (response.ok) {
-          // Optimistic UI update
-          setProducts(products.filter((product) => product._id !== productId));
+          // Refresh the products list
+          await fetchProducts();
           alert("Product deleted successfully");
         } else {
           const error = await response.json();
@@ -70,6 +71,7 @@ export default function ProductsAdmin() {
       setCurrentPage(newPage);
     }
   };
+
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
@@ -85,7 +87,7 @@ export default function ProductsAdmin() {
         </div>
 
         <div className="bg-white shadow rounded-lg overflow-hidden">
-          {/* Search and filters */}
+          {/* Search */}
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center">
               <div className="relative flex-grow">
@@ -103,45 +105,30 @@ export default function ProductsAdmin() {
             </div>
           </div>
 
-          {/* Product table */}
+          {/* Products table */}
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Product
                   </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Image
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Price
                   </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Stock
                   </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Category
                   </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -150,7 +137,7 @@ export default function ProductsAdmin() {
                 {loading ? (
                   <tr>
                     <td
-                      colSpan="6"
+                      colSpan="7"
                       className="px-6 py-4 text-center text-sm text-gray-500"
                     >
                       Loading products...
@@ -159,22 +146,41 @@ export default function ProductsAdmin() {
                 ) : products.length === 0 ? (
                   <tr>
                     <td
-                      colSpan="6"
+                      colSpan="7"
                       className="px-6 py-4 text-center text-sm text-gray-500"
                     >
                       No products found
                     </td>
                   </tr>
                 ) : (
-                  products.map((product) => (
-                    <tr key={product.id} className="hover:bg-gray-50">
+                  products.map((product,i) => (
+                    <tr key={product._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
                           {product.name}
                         </div>
                         <div className="text-sm text-gray-500">
-                          ID: {product.id}
+                          ID: {product._id}
                         </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {product.image ? (
+                          <Image
+                            src={product.image}
+                            alt={product.name || "product image"}
+                            width={50}
+                            height={50}
+                            className="rounded object-cover"
+                            loader={({ src, width, quality }) => {
+                              return `${src}?w=${width}&q=${quality || 75}`;
+                            }}
+                            unoptimized={true}
+                          />
+                        ) : (
+                          <span className="text-sm text-gray-400 italic">
+                            No image
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
@@ -188,7 +194,7 @@ export default function ProductsAdmin() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {product.category}
+                          {product.category?.name || "Uncategorized"}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -205,13 +211,13 @@ export default function ProductsAdmin() {
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end space-x-2">
                           <Link
-                            href={`/admin/products/${product.id}/edit`}
+                            href={`/admin/products/${product._id}/edit`}
                             className="text-indigo-600 hover:text-indigo-900"
                           >
                             <Edit className="w-5 h-5" />
                           </Link>
                           <button
-                            onClick={() => handleDelete(product.id)}
+                            onClick={() => handleDelete(product._id)}
                             className="text-red-600 hover:text-red-900"
                           >
                             <Trash className="w-5 h-5" />

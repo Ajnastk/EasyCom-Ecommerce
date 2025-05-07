@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save, Upload, X } from "lucide-react";
@@ -9,15 +9,16 @@ export default function AddProduct() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState("");
+  const [categories, setCategories] = useState([]);
+  const [imageFile, setImageFile] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     brand: "",
     price: 0,
-    quantity: 0,
+    stock: 0,
     color: "",
     category: "",
-    image: ""
   });
 
   const handleChange = (e) => {
@@ -28,26 +29,39 @@ export default function AddProduct() {
     });
   };
 
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch(`/api/categories`);
+        const data = await res.json();
+
+        const filtered = data.filter((category) => category.name.toLowerCase());
+        // console.log(filtered);
+
+        setCategories(filtered);
+        // setTotalPages(2); // Optional: calculate total pages based on result length
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // In a real implementation, you would upload this to your server/storage
-      // For demo purposes, we'll just create a local URL
+      setImageFile(file);
       const previewUrl = URL.createObjectURL(file);
       setImagePreview(previewUrl);
-      setFormData({
-        ...formData,
-        image: previewUrl // In production, this should be the server URL after upload
-      });
     }
   };
 
   const removeImage = () => {
     setImagePreview("");
-    setFormData({
-      ...formData,
-      image: ""
-    });
+    setImageFile(null);
   };
 
   const handleSubmit = async (e) => {
@@ -55,24 +69,28 @@ export default function AddProduct() {
     setLoading(true);
 
     try {
+      const form = new FormData();
+      form.append("name", formData.name);
+      form.append("description", formData.description);
+      form.append("brand", formData.brand);
+      form.append("price", formData.price);
+      form.append("stock", formData.stock);
+      form.append("color", formData.color);
+      form.append("category", formData.category);
+      if (imageFile) form.append("image", imageFile);
+
       const response = await fetch("/api/products", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...formData,
-          price: parseFloat(formData.price),
-          quantity: parseInt(formData.quantity, 10),
-        }),
+        body: form,
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create product");
+        const errData = await response.json();
+        throw new Error(errData.message || "Failed to create product");
       }
 
       const data = await response.json();
-      console.log("Product created successfully:", data);
+      // console.log("Product created successfully:", data);
       alert("Product created successfully!");
       router.push("/admin/products");
     } catch (error) {
@@ -81,19 +99,6 @@ export default function AddProduct() {
       setLoading(false);
     }
   };
-
-  const categories = [
-    { _id: "1", name: "Electronics" },
-    { _id: "2", name: "Clothing" },
-    { _id: "3", name: "Books" },
-    { _id: "4", name: "Home & Garden" },
-    { _id: "5", name: "Sports" },
-    { _id: "6", name: "Beauty" },
-    { _id: "7", name: "Toys" },
-    { _id: "8", name: "Furniture" },
-    { _id: "9", name: "Office" },
-    { _id: "10", name: "Other" },
-  ];
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -130,176 +135,151 @@ export default function AddProduct() {
         </div>
 
         <form id="product-form" onSubmit={handleSubmit} className="space-y-8">
+          {/* Basic Information */}
           <div className="bg-white shadow overflow-hidden sm:rounded-lg">
             <div className="px-4 py-5 sm:px-6">
-              <h3 className="text-lg leading-6 font-medium text-gray-900">
+              <h3 className="text-lg leading-6 font-semibold text-gray-900">
                 Basic Information
               </h3>
             </div>
             <div className="border-t border-gray-200 px-4 py-5 sm:p-6">
               <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                {/* Product Name */}
                 <div className="sm:col-span-4">
-                  <label
-                    htmlFor="name"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Product Name *
+                  <label className="block text-sm font-semibold text-gray-800">
+                    Product Name <span className="text-red-500">*</span>
                   </label>
-                  <div className="mt-1">
-                    <input
-                      type="text"
-                      name="name"
-                      id="name"
-                      required
-                      value={formData.name}
-                      onChange={handleChange}
-                      className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                    />
-                  </div>
+                  <input
+                    type="text"
+                    name="name"
+                    id="name"
+                    placeholder="Enter product name"
+                    required
+                    value={formData.name}
+                    onChange={handleChange}
+                    className="bg-gray-50 text-gray-900 shadow-sm focus:ring-indigo-600 focus:border-indigo-600 block w-full sm:text-sm border border-gray-300 rounded-lg px-3 py-2"
+                  />
                 </div>
 
+                {/* Price */}
                 <div className="sm:col-span-3">
-                  <label
-                    htmlFor="price"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Price ($) *
+                  <label className="block text-sm font-semibold text-gray-800">
+                    Price ($) <span className="text-red-500">*</span>
                   </label>
-                  <div className="mt-1">
-                    <input
-                      type="number"
-                      name="price"
-                      id="price"
-                      required
-                      min="0"
-                      step="0.01"
-                      value={formData.price}
-                      onChange={handleChange}
-                      className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                    />
-                  </div>
+                  <input
+                    type="number"
+                    name="price"
+                    id="price"
+                    min="0"
+                    step="0.01"
+                    required
+                    value={formData.price}
+                    onChange={handleChange}
+                    className="bg-gray-50 text-gray-900 shadow-sm focus:ring-indigo-600 focus:border-indigo-600 block w-full sm:text-sm border border-gray-300 rounded-lg px-3 py-2"
+                  />
                 </div>
 
+                {/* Category */}
                 <div className="sm:col-span-3">
-                  <label
-                    htmlFor="category"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Category *
+                  <label className="block text-sm font-semibold text-gray-800">
+                    Category <span className="text-red-500">*</span>
                   </label>
-                  <div className="mt-1">
-                    <select
-                      id="category"
-                      name="category"
-                      required
-                      value={formData.category}
-                      onChange={handleChange}
-                      className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                    >
-                      <option value="">Select a category</option>
-                      {categories.map((category) => (
-                        <option key={category._id} value={category._id}>
-                          {category.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <select
+                    id="category"
+                    name="category"
+                    required
+                    value={formData.category}
+                    onChange={handleChange}
+                    className="bg-gray-50 text-gray-900 shadow-sm focus:ring-indigo-600 focus:border-indigo-600 block w-full sm:text-sm border border-gray-300 rounded-lg px-3 py-2"
+                  >
+                    <option value="">Select a category</option>
+                    {categories.map((category) => (
+                      <option key={category._id} value={category._id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
+                {/* Stock Quantity */}
                 <div className="sm:col-span-3">
-                  <label
-                    htmlFor="quantity"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Stock Quantity *
+                  <label className="block text-sm font-semibold text-gray-800">
+                    Stock Quantity <span className="text-red-500">*</span>
                   </label>
-                  <div className="mt-1">
-                    <input
-                      type="number"
-                      name="quantity"
-                      id="quantity"
-                      required
-                      min="0"
-                      value={formData.quantity}
-                      onChange={handleChange}
-                      className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                    />
-                  </div>
+                  <input
+                    type="number"
+                    name="stock"
+                    id="stock"
+                    required
+                    min="0"
+                    value={formData.stock}
+                    onChange={handleChange}
+                    className="bg-gray-50 text-gray-900 shadow-sm focus:ring-indigo-600 focus:border-indigo-600 block w-full sm:text-sm border border-gray-300 rounded-lg px-3 py-2"
+                  />
                 </div>
 
+                {/* Brand */}
                 <div className="sm:col-span-3">
-                  <label
-                    htmlFor="brand"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Brand *
+                  <label className="block text-sm font-semibold text-gray-800">
+                    Brand <span className="text-red-500">*</span>
                   </label>
-                  <div className="mt-1">
-                    <input
-                      type="text"
-                      name="brand"
-                      id="brand"
-                      required
-                      value={formData.brand}
-                      onChange={handleChange}
-                      className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                    />
-                  </div>
+                  <input
+                    type="text"
+                    name="brand"
+                    id="brand"
+                    required
+                    value={formData.brand}
+                    onChange={handleChange}
+                    className="bg-gray-50 text-gray-900 shadow-sm focus:ring-indigo-600 focus:border-indigo-600 block w-full sm:text-sm border border-gray-300 rounded-lg px-3 py-2"
+                  />
                 </div>
 
+                {/* Color */}
                 <div className="sm:col-span-3">
-                  <label
-                    htmlFor="color"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Color *
+                  <label className="block text-sm font-semibold text-gray-800">
+                    Color <span className="text-red-500">*</span>
                   </label>
-                  <div className="mt-1">
-                    <input
-                      type="text"
-                      name="color"
-                      id="color"
-                      required
-                      value={formData.color}
-                      onChange={handleChange}
-                      className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                    />
-                  </div>
+                  <input
+                    type="text"
+                    name="color"
+                    id="color"
+                    required
+                    value={formData.color}
+                    onChange={handleChange}
+                    className="bg-gray-50 text-gray-900 shadow-sm focus:ring-indigo-600 focus:border-indigo-600 block w-full sm:text-sm border border-gray-300 rounded-lg px-3 py-2"
+                  />
                 </div>
 
+                {/* Description */}
                 <div className="sm:col-span-6">
-                  <label
-                    htmlFor="description"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Description *
+                  <label className="block text-sm font-semibold text-gray-800">
+                    Description <span className="text-red-500">*</span>
                   </label>
-                  <div className="mt-1">
-                    <textarea
-                      id="description"
-                      name="description"
-                      rows={5}
-                      required
-                      value={formData.description}
-                      onChange={handleChange}
-                      className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                    />
-                  </div>
+                  <textarea
+                    id="description"
+                    name="description"
+                    rows={5}
+                    required
+                    value={formData.description}
+                    onChange={handleChange}
+                    className="bg-gray-50 text-gray-900 shadow-sm focus:ring-indigo-600 focus:border-indigo-600 block w-full sm:text-sm border border-gray-300 rounded-lg px-3 py-2"
+                  />
                 </div>
               </div>
             </div>
           </div>
 
+          {/* Image Upload */}
           <div className="bg-white shadow overflow-hidden sm:rounded-lg">
             <div className="px-4 py-5 sm:px-6">
-              <h3 className="text-lg leading-6 font-medium text-gray-900">
+              <h3 className="text-lg leading-6 font-semibold text-gray-900">
                 Product Image
               </h3>
             </div>
             <div className="border-t border-gray-200 px-4 py-5 sm:p-6">
               <div className="flex flex-col space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Product Image (Required)
+                <label className="block text-sm font-semibold text-gray-800">
+                  Product Image <span className="text-red-500">*</span>
                 </label>
 
                 {imagePreview ? (
@@ -328,7 +308,7 @@ export default function AddProduct() {
                       <div className="flex text-sm text-gray-600">
                         <label
                           htmlFor="file-upload"
-                          className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500"
+                          className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500"
                         >
                           <span>Upload a file</span>
                           <input
@@ -338,7 +318,7 @@ export default function AddProduct() {
                             className="sr-only"
                             onChange={handleImageUpload}
                             accept="image/*"
-                            required={!formData.image}
+                            required
                           />
                         </label>
                         <p className="pl-1">or drag and drop</p>
@@ -353,6 +333,7 @@ export default function AddProduct() {
             </div>
           </div>
 
+          {/* Action Buttons */}
           <div className="flex justify-end">
             <Link
               href="/admin/products"
@@ -362,9 +343,11 @@ export default function AddProduct() {
             </Link>
             <button
               type="submit"
-              disabled={loading || !formData.image}
+              disabled={loading }
               className={`ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white ${
-                loading || !formData.image ? "bg-indigo-400" : "bg-indigo-600 hover:bg-indigo-700"
+                loading 
+                  ? "bg-indigo-400"
+                  : "bg-indigo-600 hover:bg-indigo-700"
               } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
             >
               {loading ? "Saving..." : "Save Product"}
