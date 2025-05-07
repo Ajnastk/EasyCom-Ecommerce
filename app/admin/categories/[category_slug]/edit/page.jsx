@@ -1,23 +1,56 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save, Upload, X } from "lucide-react";
 
-export default function AddCategory() {
+export default function EditCategory({ params }) {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: "",
     slug: "",
     description: "",
   });
-
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
+  const [originalImage, setOriginalImage] = useState("");
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchCategory = async () => {
+      try {
+        const res = await fetch(`/api/categories/${params.category_slug}`);
+        
+        if (!res.ok) {
+          throw new Error(await res.text());
+        }
+        
+        const data = await res.json();
+
+        setFormData({
+          name: data.name || "",
+          slug: data.slug || "",
+          description: data.description || "",
+        });
+
+        if (data.image) {
+          setOriginalImage(data.image);
+          setImagePreview(data.image);
+        }
+      } catch (error) {
+        console.error("Error fetching category:", error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategory();
+  }, [params.category_slug]); // Fixed dependency
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
 
     if (name === "name") {
       const generatedSlug = value
@@ -32,7 +65,7 @@ export default function AddCategory() {
     } else {
       setFormData((prev) => ({
         ...prev,
-        [name]: type === "checkbox" ? checked : value,
+        [name]: value,
       }));
     }
   };
@@ -40,6 +73,10 @@ export default function AddCategory() {
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        alert("File size should be less than 10MB");
+        return;
+      }
       setImageFile(file);
       setImagePreview(URL.createObjectURL(file));
     }
@@ -53,37 +90,65 @@ export default function AddCategory() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
     try {
       const form = new FormData();
       form.append("name", formData.name);
       form.append("slug", formData.slug);
       form.append("description", formData.description);
-      if (imageFile) form.append("image", imageFile);
+      
+      if (imageFile) {
+        form.append("image", imageFile);
+      } else if (!originalImage) {
+        form.append("removeImage", "true");
+      }
 
-      const res = await fetch("/api/categories", {
-        method: "POST",
+      const res = await fetch(`/api/categories/${params.category_slug}`, {
+        method: "PUT",
         body: form,
       });
 
-      if (!res.ok) throw new Error("Something went wrong");
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
 
       const data = await res.json();
-      alert("Category created successfully!");
+      alert("Category updated successfully!");
       router.push("/admin/categories");
     } catch (error) {
-      console.error("Error creating category:", error);
-      alert("Failed to create category. Please try again.");
+      console.error("Error updating category:", error);
+      setError(error.message || "Failed to update category");
+    } finally {
       setLoading(false);
     }
   };
 
-  const isFormValid = formData.name && formData.slug && imageFile;
+  const isFormValid = formData.name && formData.slug;
+
+  if (loading) {
+    return <div className="text-center py-8">Loading category data...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8 text-red-500">
+        Error: {error}
+        <button
+          onClick={() => router.push("/admin/categories")}
+          className="ml-4 px-4 py-2 bg-gray-200 rounded"
+        >
+          Back to Categories
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <form id="category-form" onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Form header */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center">
               <Link
@@ -93,38 +158,33 @@ export default function AddCategory() {
                 <ArrowLeft className="w-5 h-5" />
               </Link>
               <h1 className="text-2xl font-bold text-gray-900">
-                Add New Category
+                Edit Category
               </h1>
             </div>
             <button
-              type="button"
-              onClick={() =>
-                document.getElementById("category-form").requestSubmit()
-              }
+              type="submit"
               disabled={loading || !isFormValid}
               className={`inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
                 loading ? "bg-indigo-400" : "bg-indigo-600 hover:bg-indigo-700"
               } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
             >
               {loading ? (
-                <>Processing...</>
+                "Saving..."
               ) : (
                 <>
                   <Save className="mr-2 h-4 w-4" />
-                  Save Category
+                  Save Changes
                 </>
               )}
             </button>
           </div>
 
+          {/* Category details */}
           <div className="bg-white shadow overflow-hidden sm:rounded-lg">
             <div className="border-t border-gray-200 px-4 py-5 sm:p-6">
               <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                 <div className="sm:col-span-4">
-                  <label
-                    htmlFor="name"
-                    className="block text-sm font-medium text-gray-700"
-                  >
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700">
                     Name *
                   </label>
                   <input
@@ -139,10 +199,7 @@ export default function AddCategory() {
                 </div>
 
                 <div className="sm:col-span-4">
-                  <label
-                    htmlFor="slug"
-                    className="block text-sm font-medium text-gray-700"
-                  >
+                  <label htmlFor="slug" className="block text-sm font-medium text-gray-700">
                     Slug *
                   </label>
                   <input
@@ -157,10 +214,7 @@ export default function AddCategory() {
                 </div>
 
                 <div className="sm:col-span-6">
-                  <label
-                    htmlFor="description"
-                    className="block text-sm font-medium text-gray-700"
-                  >
+                  <label htmlFor="description" className="block text-sm font-medium text-gray-700">
                     Description
                   </label>
                   <textarea
@@ -175,17 +229,18 @@ export default function AddCategory() {
               </div>
             </div>
           </div>
-          {/* Product Image */}
+
+          {/* Category image */}
           <div className="bg-white shadow overflow-hidden sm:rounded-lg">
             <div className="px-4 py-5 sm:px-6">
               <h3 className="text-lg leading-6 font-medium text-gray-900">
-                Product Image
+                Category Image
               </h3>
             </div>
             <div className="border-t border-gray-200 px-4 py-5 sm:p-6">
               <div className="flex flex-col space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Product Image (Required)
+                  Category Image
                 </label>
 
                 {imagePreview ? (
@@ -194,7 +249,7 @@ export default function AddCategory() {
                       <div className="group block w-full aspect-w-10 aspect-h-10 rounded-lg bg-gray-100 overflow-hidden">
                         <img
                           src={imagePreview}
-                          alt="Product preview"
+                          alt="Category preview"
                           className="object-cover w-full h-full"
                         />
                         <button
@@ -224,7 +279,6 @@ export default function AddCategory() {
                             className="sr-only"
                             onChange={handleImageUpload}
                             accept="image/*"
-                            required
                           />
                         </label>
                         <p className="pl-1">or drag and drop</p>
@@ -252,7 +306,7 @@ export default function AddCategory() {
                       : "bg-indigo-600 hover:bg-indigo-700"
                   } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
                 >
-                  {loading ? "Saving..." : "Save Category"}
+                  {loading ? "Saving..." : "Save Changes"}
                 </button>
               </div>
             </div>
