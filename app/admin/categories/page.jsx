@@ -1,75 +1,87 @@
-'use client'
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { Search, Plus, Edit, Trash, ChevronLeft, ChevronRight } from 'lucide-react'
+"use client";
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import {
+  Search,
+  Plus,
+  Edit,
+  Trash,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import Image from "next/image";
 
 export default function CategoriesAdmin() {
-  const [categories, setCategories] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
-    fetchCategories()
-  }, [currentPage, searchTerm])
+    fetchCategories();
+  }, [currentPage, searchTerm]);
 
   const fetchCategories = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      // Mock API call
-      setTimeout(() => {
-        const mockCategories = [
-          { id: 1, name: 'Electronics', slug: 'electronics', productCount: 42, status: 'active' },
-          { id: 2, name: 'Clothing', slug: 'clothing', productCount: 36, status: 'active' },
-          { id: 3, name: 'Home & Garden', slug: 'home-garden', productCount: 28, status: 'active' },
-          { id: 4, name: 'Books', slug: 'books', productCount: 15, status: 'active' },
-          { id: 5, name: 'Toys', slug: 'toys', productCount: 22, status: 'inactive' },
-          { id: 6, name: 'Sports', slug: 'sports', productCount: 18, status: 'active' },
-        ].filter(category => 
-          category.name.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-        
-        setCategories(mockCategories)
-        setTotalPages(3)
-        setLoading(false)
-      }, 500)
+      const res = await fetch(`/api/categories`);
+      const data = await res.json();
+
+      const filtered = data.filter((category) =>
+        category.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+
+      setCategories(filtered);
+      setTotalPages(2); // Optional: calculate total pages based on result length
+      setLoading(false);
     } catch (error) {
-      console.error('Error fetching categories:', error)
-      setLoading(false)
+      console.error("Error fetching categories:", error);
+      setLoading(false);
     }
-  }
+  };
 
   const handleDelete = async (categoryId) => {
-    if (confirm('Are you sure you want to delete this category?')) {
+    if (confirm("Are you sure you want to delete this category?")) {
       try {
-        // Mock delete
-        setCategories(categories.filter(category => category.id !== categoryId))
-        alert('Category deleted successfully')
+        const response = await fetch(`/api/categories/${categoryId}`, {
+          method: "DELETE",
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to delete category");
+        }
+
+        // Refresh the categories list
+        await fetchCategories();
+        alert("Category deleted successfully");
       } catch (error) {
-        console.error('Error deleting category:', error)
-        alert('Failed to delete category')
+        console.error("Error deleting category:", error);
+        alert(error.message || "Failed to delete category");
       }
     }
-  }
+  };
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
-      setCurrentPage(newPage)
+      setCurrentPage(newPage);
     }
-  }
+  };
 
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Categories</h1>
-          <Link href="/admin/categories/new" className="bg-indigo-600 text-white px-4 py-2 rounded-md flex items-center hover:bg-indigo-700 transition-colors">
+          <Link
+            href="/admin/categories/new"
+            className="bg-indigo-600 text-white px-4 py-2 rounded-md flex items-center hover:bg-indigo-700 transition-colors"
+          >
             <Plus className="w-4 h-4 mr-2" />
             Add Category
           </Link>
         </div>
-        
+
         <div className="bg-white shadow rounded-lg overflow-hidden">
           {/* Search */}
           <div className="p-4 border-b border-gray-200">
@@ -88,25 +100,40 @@ export default function CategoriesAdmin() {
               </div>
             </div>
           </div>
-          
+
           {/* Categories table */}
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Category
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Slug
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Products
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Image
                   </th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Actions
                   </th>
                 </tr>
@@ -114,43 +141,74 @@ export default function CategoriesAdmin() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {loading ? (
                   <tr>
-                    <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
+                    <td
+                      colSpan="5"
+                      className="px-6 py-4 text-center text-sm text-gray-500"
+                    >
                       Loading categories...
                     </td>
                   </tr>
                 ) : categories.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
+                    <td
+                      colSpan="5"
+                      className="px-6 py-4 text-center text-sm text-gray-500"
+                    >
                       No categories found
                     </td>
                   </tr>
                 ) : (
-                  categories.map((category) => (
-                    <tr key={category.id} className="hover:bg-gray-50">
+                  categories.map((category, i) => (
+                    <tr key={category._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{category.name}</div>
-                        <div className="text-sm text-gray-500">ID: {category.id}</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {category.name}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          ID: {category.id || i}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{category.slug}</div>
+                        <div className="text-sm text-gray-900">
+                          {category.slug}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{category.productCount}</div>
+                        <div className="text-sm text-gray-900">
+                          {category.productCount}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          category.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}>
-                          {category.status}
-                        </span>
+                        {category.image ? (
+                          <Image
+                            src={category.image}
+                            alt={category.name || "Category Image"}
+                            width={50}
+                            height={50}
+                            className="rounded object-cover"
+                            // Add these for better Cloudinary integration:
+                            loader={({ src, width, quality }) => {
+                              return `${src}?w=${width}&q=${quality || 75}`;
+                            }}
+                            unoptimized={true} // Optional: Set to false if you want Next.js to optimize
+                          />
+                        ) : (
+                          <span className="text-sm text-gray-400 italic">
+                            No image
+                          </span>
+                        )}
                       </td>
+
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end space-x-2">
-                          <Link href={`/admin/categories/${category.id}/edit`} className="text-indigo-600 hover:text-indigo-900">
+                          <Link
+                            href={`/admin/categories/${category._id}/edit`}
+                            className="text-indigo-600 hover:text-indigo-900"
+                          >
                             <Edit className="w-5 h-5" />
                           </Link>
-                          <button 
-                            onClick={() => handleDelete(category.id)} 
+                          <button
+                            onClick={() => handleDelete(category._id)}
                             className="text-red-600 hover:text-red-900"
                           >
                             <Trash className="w-5 h-5" />
@@ -163,7 +221,7 @@ export default function CategoriesAdmin() {
               </tbody>
             </table>
           </div>
-          
+
           {/* Pagination - Same as product page */}
           <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
             <div className="flex-1 flex justify-between sm:hidden">
@@ -171,7 +229,9 @@ export default function CategoriesAdmin() {
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
                 className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
-                  currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'
+                  currentPage === 1
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-gray-700 hover:bg-gray-50"
                 }`}
               >
                 Previous
@@ -180,7 +240,9 @@ export default function CategoriesAdmin() {
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
                 className={`ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
-                  currentPage === totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'
+                  currentPage === totalPages
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-gray-700 hover:bg-gray-50"
                 }`}
               >
                 Next
@@ -189,17 +251,23 @@ export default function CategoriesAdmin() {
             <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm text-gray-700">
-                  Showing page <span className="font-medium">{currentPage}</span> of{' '}
+                  Showing page{" "}
+                  <span className="font-medium">{currentPage}</span> of{" "}
                   <span className="font-medium">{totalPages}</span> pages
                 </p>
               </div>
               <div>
-                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                <nav
+                  className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                  aria-label="Pagination"
+                >
                   <button
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
                     className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${
-                      currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:bg-gray-50'
+                      currentPage === 1
+                        ? "text-gray-300 cursor-not-allowed"
+                        : "text-gray-500 hover:bg-gray-50"
                     }`}
                   >
                     <span className="sr-only">Previous</span>
@@ -211,8 +279,8 @@ export default function CategoriesAdmin() {
                       onClick={() => handlePageChange(i + 1)}
                       className={`relative inline-flex items-center px-4 py-2 border ${
                         currentPage === i + 1
-                          ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600'
-                          : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                          ? "z-10 bg-indigo-50 border-indigo-500 text-indigo-600"
+                          : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
                       } text-sm font-medium`}
                     >
                       {i + 1}
@@ -222,7 +290,9 @@ export default function CategoriesAdmin() {
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
                     className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${
-                      currentPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:bg-gray-50'
+                      currentPage === totalPages
+                        ? "text-gray-300 cursor-not-allowed"
+                        : "text-gray-500 hover:bg-gray-50"
                     }`}
                   >
                     <span className="sr-only">Next</span>
@@ -235,5 +305,5 @@ export default function CategoriesAdmin() {
         </div>
       </div>
     </div>
-  )
+  );
 }
