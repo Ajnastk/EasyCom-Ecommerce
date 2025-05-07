@@ -20,7 +20,7 @@ export async function GET(request, { params }) {
         { _id: params.product_slug },
         { slug: params.product_slug }
       ]
-    }).populate('category', 'name');
+    })
     
     if (!product) {
       return NextResponse.json(
@@ -142,6 +142,7 @@ export async function PUT(request, { params }) {
 // Delete product
 export async function DELETE(request, { params }) {
   try {
+    // console.log("product delelte process started")
     await dbConnect();
     
     const product = await productModel.findOne({
@@ -159,18 +160,16 @@ export async function DELETE(request, { params }) {
     }
     
     // Delete images from Cloudinary
-    if (product.images.length > 0) {
-      await Promise.all(
-        product.images.map(async (imageUrl) => {
+    if (product.image) {
+
           try {
-            const publicId = imageUrl.split('/').pop().split('.')[0];
+            const publicId = product.image.split('/').pop().split('.')[0];
             const fullPublicId = `ecommerce-products/${publicId}`;
             await cloudinary.uploader.destroy(fullPublicId);
-          } catch (error) {
-            console.error("Error deleting image:", error);
+          } catch (cloudinaryError) {
+            console.error("Cloudinary deletion error:", cloudinaryError);
           }
-        })
-      );
+        
     }
     
     // Delete product from database
@@ -187,3 +186,8 @@ export async function DELETE(request, { params }) {
     );
   }
 }
+
+
+
+
+
