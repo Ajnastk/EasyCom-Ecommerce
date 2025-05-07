@@ -1,8 +1,8 @@
 "use client"
 import { useState, useEffect } from "react";
-import { Eye, EyeOff, Mail, Lock, User, X, ChevronRight } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, X, ChevronRight, UserCog } from 'lucide-react';
 import Link from "next/link";
-import { signIn,signOut,useSession } from "next-auth/react";
+import { signIn, signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 // Auth Modal Component - to be imported in your Navbar
@@ -11,6 +11,7 @@ export function AuthModal({ isOpen, onClose }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [role, setRole] = useState('user'); // Default role is 'user'
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -30,6 +31,7 @@ export function AuthModal({ isOpen, onClose }) {
       setEmail('');
       setPassword('');
       setName('');
+      setRole('user');
       setErrors({});
       setFormError('');
       setLoading(false);
@@ -80,61 +82,83 @@ export function AuthModal({ isOpen, onClose }) {
     if (!validateForm()) return;
     
     setLoading(true);
-    if(isLogin){
-    try {
-      const res=await signIn('credentials',{
-        redirect :false,
-        email,
-        password
-      });
-      if(res.error){
-        throw new Error(res.error);
-      }
+    if (isLogin) {
+      try {
+        const res = await signIn('credentials', {
+          redirect: false,
+          email,
+          password
+        });
+        
+        if (res.error) {
+          throw new Error(res.error);
+        }
 
-    // Close modal on successfull login 
-    onClose();
-    router.refresh();
-    }catch (error) {
-      setFormError(error.message || 'failed to sign in');
-      console.error('Auth error:', error.message);
-    } finally {
-      setLoading(false);
-    }
-  } else {
-    //Handle signup - still need to use your API route for registration
-    try{
-      const res=await fetch('/api/auth/signup',{
-        method:'POST',
-        headers:{
-          'Content-Type' : 'application/json',
-        },
-        body :JSON.stringify({name,email,password}),
-      });
+        // Fetch session to determine role and redirect accordingly
+        const sessionRes = await fetch('/api/auth/session');
+        const session = await sessionRes.json();
+        
+        // Close modal on successful login 
+        onClose();
+        
+        // Redirect based on role
+        if (session?.user?.role === 'admin') {
+          router.push('/admin/dashboard');
+        } else {
+          router.push('/user/dashboard');
+        }
+        
+      } catch (error) {
+        setFormError(error.message || 'Failed to sign in');
+        console.error('Auth error:', error.message);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      // Handle signup
+      try {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ name, email, password, role }),
+        });
 
-      const data=await res.json();
-      if(!res.ok){
-        throw new Error(data.message || data.error || 'Something went wrong');
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message || data.error || 'Something went wrong');
+        }
+        
+        // Auto login after successful signup
+        const signInResult = await signIn('credentials', {
+          redirect: false,
+          email,
+          password
+        });
+        
+        if (signInResult.error) {
+          throw new Error(signInResult.error);
+        }
+        
+        // Close modal on successful signup and login
+        onClose();
+        
+        // Redirect based on role
+        if (role === 'admin') {
+          router.push('/admin/dashboard');
+        } else {
+          router.push('/user/dashboard');
+        }
+        
+      } catch (error) {
+        setFormError(error.message);
+        console.error('Auth Error:', error.message);
+      } finally {
+        setLoading(false);
       }
-      //Auto login after successfull signup
-      const signInResult = await signIn('credentials',{
-        redirect:false,
-        email,
-        password
-      });
-      if(signInResult.error){
-        throw new Error(signInResult.error);
-      }
-      //close modal on successfull signup and login
-      onClose();
-      router.refresh();
-    }catch(error){
-      setFormError(error.message);
-      console.error('Auth Error:',error.message);
-    }finally{
-      setLoading(false);
     }
-  }
-};
+  };
 
   if (!isOpen) return null;
 
@@ -156,7 +180,7 @@ export function AuthModal({ isOpen, onClose }) {
             {isLogin ? 'Welcome Back' : 'Create Account'}
           </h2>
           <p className="text-gray-600 mt-1">
-            {isLogin ? 'Sign in to continue shopping' : 'Join us to start shopping'}
+            {isLogin ? 'Sign in to continue' : 'Join us to get started'}
           </p>
         </div>
         
@@ -218,7 +242,7 @@ export function AuthModal({ isOpen, onClose }) {
           </div>
           
           {/* Password field */}
-          <div className="mb-6">
+          <div className="mb-4">
             <div className="flex justify-between mb-1">
               <label htmlFor="password" className="block text-gray-700 text-sm font-medium">
                 Password
@@ -255,6 +279,50 @@ export function AuthModal({ isOpen, onClose }) {
             </div>
             {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
           </div>
+          
+          {/* Role selection (signup only) */}
+          {!isLogin && (
+            <div className="mb-6">
+              <label htmlFor="role" className="block text-gray-700 text-sm font-medium mb-1">
+                Account Type
+              </label>
+              <div className="flex space-x-4">
+                <div 
+                  onClick={() => setRole('user')} 
+                  className={`flex-1 p-3 border rounded-md cursor-pointer transition-colors ${
+                    role === 'user' 
+                      ? 'border-blue-500 bg-blue-50' 
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <User size={18} className={role === 'user' ? 'text-blue-500' : 'text-gray-500'} />
+                    <span className={`ml-2 font-medium ${role === 'user' ? 'text-blue-700' : 'text-gray-700'}`}>
+                      User
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Standard user account</p>
+                </div>
+                
+                <div 
+                  onClick={() => setRole('admin')} 
+                  className={`flex-1 p-3 border rounded-md cursor-pointer transition-colors ${
+                    role === 'admin' 
+                      ? 'border-blue-500 bg-blue-50' 
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <UserCog size={18} className={role === 'admin' ? 'text-blue-500' : 'text-gray-500'} />
+                    <span className={`ml-2 font-medium ${role === 'admin' ? 'text-blue-700' : 'text-gray-700'}`}>
+                      Admin
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Administrative privileges</p>
+                </div>
+              </div>
+            </div>
+          )}
           
           {/* Submit button */}
           <button
@@ -297,10 +365,10 @@ export function AuthModal({ isOpen, onClose }) {
   );
 }
 
-// User Menu Component - shown when user is logged in
+// Enhanced UserMenu Component with role indicator
 export function UserMenu() {
   const [isOpen, setIsOpen] = useState(false);
-  const {data : session} = useSession();
+  const { data: session } = useSession();
   const router = useRouter();
   
   // Close menu when clicking outside
@@ -315,11 +383,16 @@ export function UserMenu() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
-  const handleLogout = async ()=>{
-    await signOut({redirect : false});
+  const handleLogout = async () => {
+    await signOut({ redirect: false });
     router.refresh();
+    router.push('/'); // Redirect to home page after logout
   };
-  if(!session) return null;
+  
+  if (!session) return null;
+
+  // Determine dashboard link based on user role
+  const dashboardLink = session.user.role === 'admin' ? '/admin/dashboard' : '/user/dashboard';
 
   return (
     <div className="relative user-menu">
@@ -329,34 +402,50 @@ export function UserMenu() {
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
-        <img 
-          src={session.user.avatar}
-          alt={session.user.name}
-          className="w-8 h-8 rounded-full border-2 border-gray-200"
-        />
+        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center border-2 border-gray-200 overflow-hidden">
+          {session.user.avatar ? (
+            <img 
+              src={session.user.avatar}
+              alt={session.user.name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <span className="text-gray-600 text-sm font-bold">
+              {session.user.name?.charAt(0).toUpperCase() || 'U'}
+            </span>
+          )}
+        </div>
         <span className="ml-2 hidden md:block">{session.user.name}</span>
       </button>
       
       {isOpen && (
         <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+          <div className="px-4 py-2 border-b border-gray-100">
+            <p className="text-sm font-medium text-gray-900">{session.user.name}</p>
+            <p className="text-xs text-gray-500">{session.user.email}</p>
+            <span className={`inline-block px-2 py-1 mt-1 text-xs rounded-full ${
+              session.user.role === 'admin' 
+                ? 'bg-purple-100 text-purple-800' 
+                : 'bg-blue-100 text-blue-800'
+            }`}>
+              {session.user.role === 'admin' ? 'Admin' : 'User'}
+            </span>
+          </div>
+          
           <Link 
-            href="/myAccount" 
+            href={dashboardLink}
+            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+          >
+            Dashboard
+          </Link>
+          
+          <Link 
+            href="/my-account" 
             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
           >
             My Account
           </Link>
-          {/* <Link
-            href="/orders" 
-            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-          >
-            My Orders
-          </Link>
-          <Link
-            href="/settings" 
-            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-          >
-            Settings
-          </Link> */}
+          
           <button 
             onClick={handleLogout}
             className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
