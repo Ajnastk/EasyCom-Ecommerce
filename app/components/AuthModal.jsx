@@ -103,9 +103,9 @@ export function AuthModal({ isOpen, onClose }) {
         
         // Redirect based on role
         if (session?.user?.role === 'admin') {
-          router.push('/admin/dashboard');
+          router.push('/admin');
         } else {
-          router.push('/user/dashboard');
+          router.push('/');
         }
         
       } catch (error) {
@@ -146,9 +146,9 @@ export function AuthModal({ isOpen, onClose }) {
         
         // Redirect based on role
         if (role === 'admin') {
-          router.push('/admin/dashboard');
+          router.push('/admin');
         } else {
-          router.push('/user/dashboard');
+          router.push('/');
         }
         
       } catch (error) {
