@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save, Upload, X } from "lucide-react";
 
-export default function AddProduct() {
+export default function EditProduct({ params }) {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [imagePreview, setImagePreview] = useState("");
+  const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState([]);
   const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
+  const [originalImage, setOriginalImage] = useState("");
+  const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -21,6 +23,49 @@ export default function AddProduct() {
     category: "",
   });
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch product data
+        const productRes = await fetch(`/api/products/${params.product_slug}`);
+        
+        if (!productRes.ok) {
+          throw new Error(await productRes.text());
+        }
+        
+        const productData = await productRes.json();
+
+        setFormData({
+          name: productData.name || "",
+          description: productData.description || "",
+          brand: productData.brand || "",
+          price: productData.price || 0,
+          stock: productData.stock || 0,
+          color: productData.color || "",
+          category: productData.category?._id || "",
+        });
+
+        if (productData.image) {
+          setOriginalImage(productData.image);
+          setImagePreview(productData.image);
+        }
+
+        // Fetch categories
+        const categoriesRes = await fetch(`/api/categories`);
+        const categoriesData = await categoriesRes.json();
+        setCategories(categoriesData);
+
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [params.product_id]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -29,44 +74,28 @@ export default function AddProduct() {
     });
   };
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const res = await fetch(`/api/categories`);
-        const data = await res.json();
-
-        const filtered = data.filter((category) => category.name.toLowerCase());
-        // console.log(filtered);
-
-        setCategories(filtered);
-        // setTotalPages(2); // Optional: calculate total pages based on result length
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-        setLoading(false);
-      }
-    };
-
-    fetchCategories();
-  }, []);
-
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        alert("File size should be less than 10MB");
+        return;
+      }
       setImageFile(file);
-      const previewUrl = URL.createObjectURL(file);
-      setImagePreview(previewUrl);
+      setImagePreview(URL.createObjectURL(file));
     }
   };
 
   const removeImage = () => {
-    setImagePreview("");
     setImageFile(null);
+    setImagePreview("");
   };
 
   const handleSubmit = async (e) => {
+    consol.log("handle submit process started")
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
     try {
       const form = new FormData();
@@ -77,28 +106,52 @@ export default function AddProduct() {
       form.append("stock", formData.stock);
       form.append("color", formData.color);
       form.append("category", formData.category);
-      if (imageFile) form.append("image", imageFile);
+      
+      if (imageFile) {
+        form.append("image", imageFile);
+      } else if (!originalImage) {
+        form.append("removeImage", "true");
+      }
 
-      const response = await fetch("/api/products", {
-        method: "POST",
+      const res = await fetch(`/api/products/${params.product_id}`, {
+        method: "PUT",
         body: form,
       });
 
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.message || "Failed to create product");
+      if (!res.ok) {
+        throw new Error(await res.text());
       }
 
-      const data = await response.json();
-      // console.log("Product created successfully:", data);
-      alert("Product created successfully!");
+      const data = await res.json();
+      alert("Product updated successfully!");
       router.push("/admin/products");
     } catch (error) {
-      console.error("Error creating product:", error);
-      alert("Failed to create product");
+      console.error("Error updating product:", error);
+      setError(error.message || "Failed to update product");
+    } finally {
       setLoading(false);
     }
   };
+
+  const isFormValid = formData.name && formData.brand && formData.price && formData.stock && formData.color && formData.category;
+
+  if (loading) {
+    return <div className="text-center py-8">Loading product data...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8 text-red-500">
+        Error: {error}
+        <button
+          onClick={() => router.push("/admin/products")}
+          className="ml-4 px-4 py-2 bg-gray-200 rounded"
+        >
+          Back to Products
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -112,23 +165,23 @@ export default function AddProduct() {
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <h1 className="text-2xl font-bold text-gray-900">
-              Add New Product
+              Edit Product
             </h1>
           </div>
           <button
             type="button"
             onClick={() => document.getElementById("product-form").submit()}
-            disabled={loading}
+            disabled={loading || !isFormValid}
             className={`inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
               loading ? "bg-indigo-400" : "bg-indigo-600 hover:bg-indigo-700"
             } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
           >
             {loading ? (
-              <>Processing...</>
+              "Saving..."
             ) : (
               <>
                 <Save className="mr-2 h-4 w-4" />
-                Save Product
+                Save Changes
               </>
             )}
           </button>
@@ -279,7 +332,7 @@ export default function AddProduct() {
             <div className="border-t border-gray-200 px-4 py-5 sm:p-6">
               <div className="flex flex-col space-y-2">
                 <label className="block text-sm font-semibold text-gray-800">
-                  Product Image <span className="text-red-500">*</span>
+                  Product Image
                 </label>
 
                 {imagePreview ? (
@@ -318,7 +371,6 @@ export default function AddProduct() {
                             className="sr-only"
                             onChange={handleImageUpload}
                             accept="image/*"
-                            required
                           />
                         </label>
                         <p className="pl-1">or drag and drop</p>
@@ -343,14 +395,14 @@ export default function AddProduct() {
             </Link>
             <button
               type="submit"
-              disabled={loading }
+              disabled={loading || !isFormValid}
               className={`ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white ${
-                loading 
+                loading
                   ? "bg-indigo-400"
                   : "bg-indigo-600 hover:bg-indigo-700"
               } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
             >
-              {loading ? "Saving..." : "Save Product"}
+              {loading ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </form>

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import categoryModel from "@/lib/models/Category";
-import { v2 as cloudinary } from 'cloudinary';
+import { v2 as cloudinary } from "cloudinary";
 
 export async function POST(request) {
   try {
@@ -11,48 +11,50 @@ export async function POST(request) {
     //   api_key: process.env.CLOUDINARY_API_KEY ? "✅ Loaded" : "❌ Missing",
     //   api_secret: process.env.CLOUDINARY_API_SECRET ? "✅ Loaded" : "❌ Missing"
     // });
-    
+
     // Configure Cloudinary
     cloudinary.config({
       cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
       api_key: process.env.CLOUDINARY_API_KEY,
-      api_secret: process.env.CLOUDINARY_API_SECRET
+      api_secret: process.env.CLOUDINARY_API_SECRET,
     });
 
     await dbConnect();
-    
+
     // Use FormData API to handle multipart/form-data
     const formData = await request.formData();
-    
+
     // Extract form fields and log them for debugging
     const name = formData.get("name");
     const slug = formData.get("slug");
     const description = formData.get("description") || "";
     const image = formData.get("image");
-    
+
     // console.log("Form data received:", { name, slug, description, imageExists: !!image });
-    
+
     let imageUrl = "";
-    
+
     // Handle image upload via Cloudinary
     if (image && image instanceof File) {
       try {
         // console.log("Processing image:", image.name, image.type, image.size);
-        
+
         // Convert file to base64 string for Cloudinary upload
         const bytes = await image.arrayBuffer();
         const buffer = Buffer.from(bytes);
-        const base64String = `data:${image.type};base64,${buffer.toString('base64')}`;
-        
+        const base64String = `data:${image.type};base64,${buffer.toString(
+          "base64"
+        )}`;
+
         // console.log("Uploading to Cloudinary...");
-        
+
         // Upload to Cloudinary
         const uploadResult = await new Promise((resolve, reject) => {
           cloudinary.uploader.upload(
-            base64String, 
-            { 
+            base64String,
+            {
               folder: "ecommerce-categories",
-              resource_type: "image" 
+              resource_type: "image",
             },
             (error, result) => {
               if (error) {
@@ -65,7 +67,7 @@ export async function POST(request) {
             }
           );
         });
-        
+
         // Use the secure URL from Cloudinary
         imageUrl = uploadResult.secure_url;
         // console.log("Image uploaded successfully:", imageUrl);
@@ -77,7 +79,7 @@ export async function POST(request) {
         );
       }
     }
-    
+
     // Create new category in database
     // console.log("Creating category in database with image URL:", imageUrl);
     const newCategory = await categoryModel.create({
@@ -86,7 +88,7 @@ export async function POST(request) {
       description,
       image: imageUrl,
     });
-    
+
     // console.log("Category created successfully:", newCategory);
     return NextResponse.json(newCategory, { status: 201 });
   } catch (error) {
