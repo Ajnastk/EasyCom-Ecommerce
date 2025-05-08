@@ -1,34 +1,28 @@
 import dbConnect from "@/lib/mongodb";
 import { NextResponse } from "next/server";
 import productModel from "@/lib/models/Product";
-import { v2 as cloudinary } from 'cloudinary';
+import { v2 as cloudinary } from "cloudinary";
 
 // Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 // Get single product
 export async function GET(request, { params }) {
   try {
     await dbConnect();
-    
+
     const product = await productModel.findOne({
-      $or: [
-        { _id: params.product_slug },
-        { slug: params.product_slug }
-      ]
-    })
-    
+      $or: [{ _id: params.product_slug }, { slug: params.product_slug }],
+    });
+
     if (!product) {
-      return NextResponse.json(
-        { error: "Product not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
-    
+
     return NextResponse.json(product);
   } catch (error) {
     return NextResponse.json(
@@ -41,8 +35,10 @@ export async function GET(request, { params }) {
 // Update product
 export async function PUT(request, { params }) {
   try {
+    console.log("product update process started");
+
     await dbConnect();
-    
+
     const formData = await request.formData();
     const name = formData.get("name");
     const description = formData.get("description");
@@ -50,88 +46,128 @@ export async function PUT(request, { params }) {
     const stock = parseInt(formData.get("stock"));
     const category = formData.get("category");
     const status = formData.get("status");
-    const newImages = formData.getAll("images");
-    const imagesToRemove = formData.getAll("imagesToRemove");
-    
+    const brand = formData.get("brand");
+    const color = formData.get("color");
+    const newImage = formData.get("images");
+    const imagesToRemove = formData.get("imagesToRemove") === "true";
+
     // Find existing product
+    const productSlug = params.product_slug;
     const existingProduct = await productModel.findOne({
-      $or: [
-        { _id: params.product_slug },
-        { slug: params.product_slug }
-      ]
+      $or: [{ _id: productSlug }, { slug: productSlug }],
     });
-    
+
     if (!existingProduct) {
-      return NextResponse.json(
-        { error: "Product not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
-    
-    // Handle image removal from Cloudinary
-    if (imagesToRemove.length > 0) {
-      await Promise.all(
-        imagesToRemove.map(async (publicId) => {
-          try {
-            const fullPublicId = `ecommerce-products/${publicId}`;
-            await cloudinary.uploader.destroy(fullPublicId);
-          } catch (error) {
-            console.error("Error deleting image:", error);
-          }
-        })
-      );
-    }
-    
-    // Upload new images to Cloudinary
+
+    let imageUrl = existingProduct.image;
     const newImageUrls = [];
-    
-    for (const image of newImages) {
-      if (image instanceof File) {
-        const arrayBuffer = await image.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        
-        const uploadResult = await new Promise((resolve, reject) => {
-          cloudinary.uploader.upload_stream(
-            {
-              folder: "ecommerce-products",
-              resource_type: "image"
-            },
-            (error, result) => {
-              if (error) return reject(error);
-              resolve(result);
-            }
-          ).end(buffer);
-        });
-        
-        newImageUrls.push(uploadResult.secure_url);
+
+    // Handle image removal from Cloudinary
+    if (imagesToRemove && existingProduct.image) {
+      try {
+        const publicId = existingProduct.image.split("/").pop().split(".")[0];
+        const fullPublicId = `ecommerce-products/${publicId}`;
+        await cloudinary.uploader.destroy(fullPublicId);
+        imageUrl = null;
+      } catch (error) {
+        console.error("Error deleting image:", error);
       }
     }
+
+    // Handle image uploads
+    if (newImage) {
+      try {
+        // Delete old image if exists (similar to category logic)
+        if (existingProduct.image && !imagesToRemove) {
+          try {
+            const publicId = existingProduct.image.split("/").pop().split(".")[0];
+            const fullPublicId = `ecommerce-products/${publicId}`;
+            await cloudinary.uploader.destroy(fullPublicId);
+          } catch (cloudinaryError) {
+            console.error("Error deleting old image:", cloudinaryError);
+          }
+        }
+        
+        // Upload new image
+        const arrayBuffer = await newImage.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
+        const uploadResult = await new Promise((resolve, reject) => {
+          cloudinary.uploader
+            .upload_stream(
+              {
+                folder: "ecommerce-products",
+                resource_type: "image",
+              },
+              (error, result) => {
+                if (error) return reject(error);
+                resolve(result);
+              }
+            )
+            .end(buffer);
+        });
+
+        imageUrl = uploadResult.secure_url;
+        newImageUrls.push(uploadResult.secure_url);
+      } catch (uploadError) {
+        console.error("Image upload error:", uploadError);
+        return NextResponse.json(
+          { error: "Failed to upload image" },
+          { status: 500 }
+        );
+      }
+    }
+
+    // Prepare images array
+    let updatedImages = existingProduct.images || [];
     
-    // Filter out removed images and add new ones
-    const updatedImages = [
-      ...existingProduct.images.filter(
-        img => !imagesToRemove.includes(img.split('/').pop().split('.')[0])
-      ),
-      ...newImageUrls
-    ];
+    // If imagesToRemove is true, empty the array and delete from Cloudinary
+    if (imagesToRemove) {
+      // Delete all existing images from Cloudinary
+      if (updatedImages && updatedImages.length > 0) {
+        try {
+          for (const img of updatedImages) {
+            const publicId = img.split("/").pop().split(".")[0];
+            const fullPublicId = `ecommerce-products/${publicId}`;
+            await cloudinary.uploader.destroy(fullPublicId);
+          }
+        } catch (deleteError) {
+          console.error("Error deleting multiple images:", deleteError);
+        }
+      }
+      updatedImages = [];
+    }
     
+    // Add new image URLs if any
+    if (newImageUrls.length > 0) {
+      updatedImages = [...updatedImages, ...newImageUrls];
+    }
+
     // Update product
-    const updatedProduct = await productModel.findByIdAndUpdate(
-      existingProduct._id,
-      {
-        name,
-        description,
-        price,
-        stock,
-        category,
-        status,
-        images: updatedImages
-      },
-      { new: true }
-    ).populate('category', 'name');
-    
+    const updatedProduct = await productModel
+      .findByIdAndUpdate(
+        existingProduct._id,
+        {
+          name,
+          description,
+          price,
+          stock,
+          category,
+          status,
+          brand,
+          color,
+          image: imageUrl,
+          images: updatedImages,
+        },
+        { new: true }
+      )
+      .populate("category", "name");
+
     return NextResponse.json(updatedProduct);
   } catch (error) {
+    console.error("Update error:", error);
     return NextResponse.json(
       { error: "Failed to update product: " + error.message },
       { status: 500 }
@@ -144,37 +180,29 @@ export async function DELETE(request, { params }) {
   try {
     // console.log("product delelte process started")
     await dbConnect();
-    
+
     const product = await productModel.findOne({
-      $or: [
-        { _id: params.product_slug },
-        { slug: params.product_slug }
-      ]
+      $or: [{ _id: params.product_slug }, { slug: params.product_slug }],
     });
-    
+
     if (!product) {
-      return NextResponse.json(
-        { error: "Product not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
-    
+
     // Delete images from Cloudinary
     if (product.image) {
-
-          try {
-            const publicId = product.image.split('/').pop().split('.')[0];
-            const fullPublicId = `ecommerce-products/${publicId}`;
-            await cloudinary.uploader.destroy(fullPublicId);
-          } catch (cloudinaryError) {
-            console.error("Cloudinary deletion error:", cloudinaryError);
-          }
-        
+      try {
+        const publicId = product.image.split("/").pop().split(".")[0];
+        const fullPublicId = `ecommerce-products/${publicId}`;
+        await cloudinary.uploader.destroy(fullPublicId);
+      } catch (cloudinaryError) {
+        console.error("Cloudinary deletion error:", cloudinaryError);
+      }
     }
-    
+
     // Delete product from database
     await productModel.findByIdAndDelete(product._id);
-    
+
     return NextResponse.json(
       { message: "Product deleted successfully" },
       { status: 200 }
@@ -186,8 +214,3 @@ export async function DELETE(request, { params }) {
     );
   }
 }
-
-
-
-
-

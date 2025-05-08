@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save, Upload, X } from "lucide-react";
 
-export default function EditProduct({ params }) {
+export default function EditProduct({ params: initialParams }) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState([]);
@@ -23,16 +23,18 @@ export default function EditProduct({ params }) {
     category: "",
   });
 
+  const productSlug = initialParams.product_slug;
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         // Fetch product data
-        const productRes = await fetch(`/api/products/${params.product_slug}`);
-        
+        const productRes = await fetch(`/api/products/${productSlug}`);
+
         if (!productRes.ok) {
           throw new Error(await productRes.text());
         }
-        
+
         const productData = await productRes.json();
 
         setFormData({
@@ -42,7 +44,7 @@ export default function EditProduct({ params }) {
           price: productData.price || 0,
           stock: productData.stock || 0,
           color: productData.color || "",
-          category: productData.category?._id || "",
+          category: productData.category || "",
         });
 
         if (productData.image) {
@@ -54,7 +56,6 @@ export default function EditProduct({ params }) {
         const categoriesRes = await fetch(`/api/categories`);
         const categoriesData = await categoriesRes.json();
         setCategories(categoriesData);
-
       } catch (error) {
         console.error("Error fetching data:", error);
         setError(error.message);
@@ -64,7 +65,7 @@ export default function EditProduct({ params }) {
     };
 
     fetchData();
-  }, [params.product_id]);
+  }, [productSlug]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -92,7 +93,7 @@ export default function EditProduct({ params }) {
   };
 
   const handleSubmit = async (e) => {
-    consol.log("handle submit process started")
+    console.log("handle submit process started");
     e.preventDefault();
     setLoading(true);
     setError(null);
@@ -106,20 +107,23 @@ export default function EditProduct({ params }) {
       form.append("stock", formData.stock);
       form.append("color", formData.color);
       form.append("category", formData.category);
-      
+      form.append("status", "active");
+
       if (imageFile) {
-        form.append("image", imageFile);
-      } else if (!originalImage) {
-        form.append("removeImage", "true");
+        form.append("images", imageFile);
+      } else if (!imagePreview) {
+        // Only set imagesToRemove if both imageFile is null and imagePreview is empty
+        form.append("imagesToRemove", "true");
       }
 
-      const res = await fetch(`/api/products/${params.product_id}`, {
+      const res = await fetch(`/api/products/${productSlug}`, {
         method: "PUT",
         body: form,
       });
 
       if (!res.ok) {
-        throw new Error(await res.text());
+        const errorText = await res.text();
+        throw new Error(errorText);
       }
 
       const data = await res.json();
@@ -133,7 +137,13 @@ export default function EditProduct({ params }) {
     }
   };
 
-  const isFormValid = formData.name && formData.brand && formData.price && formData.stock && formData.color && formData.category;
+  const isFormValid =
+    formData.name &&
+    formData.brand &&
+    formData.price &&
+    formData.stock &&
+    formData.color &&
+    formData.category;
 
   if (loading) {
     return <div className="text-center py-8">Loading product data...</div>;
@@ -152,7 +162,6 @@ export default function EditProduct({ params }) {
       </div>
     );
   }
-
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
@@ -164,9 +173,7 @@ export default function EditProduct({ params }) {
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Edit Product
-            </h1>
+            <h1 className="text-2xl font-bold text-gray-900">Edit Product</h1>
           </div>
           <button
             type="button"
@@ -397,9 +404,7 @@ export default function EditProduct({ params }) {
               type="submit"
               disabled={loading || !isFormValid}
               className={`ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white ${
-                loading
-                  ? "bg-indigo-400"
-                  : "bg-indigo-600 hover:bg-indigo-700"
+                loading ? "bg-indigo-400" : "bg-indigo-600 hover:bg-indigo-700"
               } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
             >
               {loading ? "Saving..." : "Save Changes"}
