@@ -15,6 +15,7 @@ export default function AddCategory() {
 
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
+  const [showSavingPopup, setShowSavingPopup] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -53,6 +54,7 @@ export default function AddCategory() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setShowSavingPopup(true); // Show the popup when submitting
 
     try {
       const form = new FormData();
@@ -69,11 +71,14 @@ export default function AddCategory() {
       if (!res.ok) throw new Error("Something went wrong");
 
       const data = await res.json();
+      setShowSavingPopup(false); // Hide popup on success
       alert("Category created successfully!");
       router.push("/admin/categories");
     } catch (error) {
       console.error("Error creating category:", error);
+      setShowSavingPopup(false); // Hide popup on error
       alert("Failed to create category. Please try again.");
+    } finally {
       setLoading(false);
     }
   };
@@ -82,6 +87,19 @@ export default function AddCategory() {
 
   return (
     <div className="bg-gray-50 min-h-screen">
+      {/* Saving Popup */}
+      {showSavingPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mr-3"></div>
+              <p className="text-lg font-medium text-gray-900">
+                Saving category...
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <form id="category-form" onSubmit={handleSubmit} className="space-y-8">
           <div className="flex items-center justify-between mb-6">

@@ -16,16 +16,17 @@ export default function EditCategory({ params }) {
   const [imagePreview, setImagePreview] = useState("");
   const [originalImage, setOriginalImage] = useState("");
   const [error, setError] = useState(null);
+  const [showUpdatingPopup, setShowUpdatingPopup] = useState(false);
 
   useEffect(() => {
     const fetchCategory = async () => {
       try {
         const res = await fetch(`/api/categories/${params.category_slug}`);
-        
+
         if (!res.ok) {
           throw new Error(await res.text());
         }
-        
+
         const data = await res.json();
 
         setFormData({
@@ -89,15 +90,16 @@ export default function EditCategory({ params }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    // setLoading(true);
     setError(null);
+    setShowUpdatingPopup(true); // Show the popup when submitting
 
     try {
       const form = new FormData();
       form.append("name", formData.name);
       form.append("slug", formData.slug);
       form.append("description", formData.description);
-      
+
       if (imageFile) {
         form.append("image", imageFile);
       } else if (!originalImage) {
@@ -114,11 +116,13 @@ export default function EditCategory({ params }) {
       }
 
       const data = await res.json();
+      setShowUpdatingPopup(false); // Hide popup on success
       alert("Category updated successfully!");
       router.push("/admin/categories");
     } catch (error) {
       console.error("Error updating category:", error);
       setError(error.message || "Failed to update category");
+      setShowUpdatingPopup(false); // Hide popup on error
     } finally {
       setLoading(false);
     }
@@ -127,7 +131,18 @@ export default function EditCategory({ params }) {
   const isFormValid = formData.name && formData.slug;
 
   if (loading) {
-    return <div className="text-center py-8">Loading category data...</div>;
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+          <div className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mr-3"></div>
+            <p className="text-lg font-medium text-gray-900">
+              Loading Category Data...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
@@ -146,6 +161,19 @@ export default function EditCategory({ params }) {
 
   return (
     <div className="bg-gray-50 min-h-screen">
+      {/* Updating Popup */}
+      {showUpdatingPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mr-3"></div>
+              <p className="text-lg font-medium text-gray-900">
+                Updating category...
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Form header */}
@@ -184,7 +212,10 @@ export default function EditCategory({ params }) {
             <div className="border-t border-gray-200 px-4 py-5 sm:p-6">
               <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                 <div className="sm:col-span-4">
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="name"
+                    className="block text-sm font-medium text-gray-700"
+                  >
                     Name *
                   </label>
                   <input
@@ -199,7 +230,10 @@ export default function EditCategory({ params }) {
                 </div>
 
                 <div className="sm:col-span-4">
-                  <label htmlFor="slug" className="block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="slug"
+                    className="block text-sm font-medium text-gray-700"
+                  >
                     Slug *
                   </label>
                   <input
@@ -214,7 +248,10 @@ export default function EditCategory({ params }) {
                 </div>
 
                 <div className="sm:col-span-6">
-                  <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="description"
+                    className="block text-sm font-medium text-gray-700"
+                  >
                     Description
                   </label>
                   <textarea
