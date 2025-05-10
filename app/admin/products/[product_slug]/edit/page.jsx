@@ -13,6 +13,7 @@ export default function EditProduct({ params: initialParams }) {
   const [imagePreview, setImagePreview] = useState("");
   const [originalImage, setOriginalImage] = useState("");
   const [error, setError] = useState(null);
+  const [showUpdatingPopup, setShowUpdatingPopup] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -93,9 +94,10 @@ export default function EditProduct({ params: initialParams }) {
   };
 
   const handleSubmit = async (e) => {
-    console.log("handle submit process started");
+    // console.log("handle submit process started");
     e.preventDefault();
-    setLoading(true);
+    // setLoading(true);
+    setShowUpdatingPopup(true)
     setError(null);
 
     try {
@@ -133,7 +135,8 @@ export default function EditProduct({ params: initialParams }) {
       console.error("Error updating product:", error);
       setError(error.message || "Failed to update product");
     } finally {
-      setLoading(false);
+      setShowUpdatingPopup(false)
+      // setLoading(false);
     }
   };
 
@@ -145,9 +148,20 @@ export default function EditProduct({ params: initialParams }) {
     formData.color &&
     formData.category;
 
-  if (loading) {
-    return <div className="text-center py-8">Loading product data...</div>;
-  }
+    if (loading) {
+      return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mr-3"></div>
+              <p className="text-lg font-medium text-gray-900">
+                Loading Product Data...
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
 
   if (error) {
     return (
@@ -163,7 +177,21 @@ export default function EditProduct({ params: initialParams }) {
     );
   }
   return (
+
     <div className="bg-gray-50 min-h-screen">
+    {/* Delete Popup */}
+    {showUpdatingPopup && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+          <div className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mr-3"></div>
+            <p className="text-lg font-medium text-gray-900">
+              Updating Product...
+            </p>
+          </div>
+        </div>
+      </div>
+    )}
       <div className="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center">

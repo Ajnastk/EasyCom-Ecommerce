@@ -17,6 +17,8 @@ export default function CategoriesAdmin() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [deleting, setDeleting] = useState(false);
+  const [deletingId, setDeletingId] = useState(null); 
 
   useEffect(() => {
     fetchCategories();
@@ -43,6 +45,8 @@ export default function CategoriesAdmin() {
 
   const handleDelete = async (categoryId) => {
     if (confirm("Are you sure you want to delete this category?")) {
+      setDeleting(true);
+      setDeletingId(categoryId); // Set the ID of the category being deleted
       try {
         const response = await fetch(`/api/categories/${categoryId}`, {
           method: "DELETE",
@@ -54,10 +58,14 @@ export default function CategoriesAdmin() {
 
         // Refresh the categories list
         await fetchCategories();
+        setDeleting(false);
+        setDeletingId(null); // Reset the deleting ID
         alert("Category deleted successfully");
       } catch (error) {
         console.error("Error deleting category:", error);
         alert(error.message || "Failed to delete category");
+        setDeleting(false);
+        setDeletingId(null);
       }
     }
   };
@@ -70,6 +78,20 @@ export default function CategoriesAdmin() {
 
   return (
     <div className="bg-gray-50 min-h-screen">
+      {/* Delete Popup */}
+      {deleting && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mr-3"></div>
+              <p className="text-lg font-medium text-gray-900">
+                Deleting category...
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Categories</h1>
@@ -143,9 +165,10 @@ export default function CategoriesAdmin() {
                   <tr>
                     <td
                       colSpan="5"
-                      className="px-6 py-4 text-center text-sm text-gray-500"
+                      className="px-6 py-4 text-center flex justify-center text-sm text-gray-500 ml-[400px] gap-[5px]"
                     >
-                      Loading categories...
+                      <div>Loading categories...</div>{" "}
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-600 mr-3"></div>
                     </td>
                   </tr>
                 ) : categories.length === 0 ? (
@@ -209,9 +232,20 @@ export default function CategoriesAdmin() {
                           </Link>
                           <button
                             onClick={() => handleDelete(category._id)}
-                            className="text-red-600 hover:text-red-900"
+                            disabled={deleting && deletingId === category._id}
+                            className={`text-red-600 hover:text-red-900 ${
+                              deleting && deletingId === category._id
+                                ? "opacity-50 cursor-not-allowed"
+                                : ""
+                            }`}
                           >
-                            <Trash className="w-5 h-5" />
+                            {deleting && deletingId === category._id ? (
+                              <span className="inline-block animate-spin">
+                                ⏳
+                              </span>
+                            ) : (
+                              <Trash className="w-5 h-5" />
+                            )}
                           </button>
                         </div>
                       </td>

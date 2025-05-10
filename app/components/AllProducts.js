@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { ShoppingBag, Star, Search, Filter, ChevronDown } from "lucide-react";
 
@@ -8,11 +8,14 @@ const ProductCard = ({ product }) => {
     <div className="bg-white rounded-xl p-3 sm:p-4 border-1 hover:shadow-lg transition-shadow duration-300">
       <div className="relative overflow-hidden rounded-lg bg-gray-50 mb-3 sm:mb-4 aspect-square">
         <Image
-          src={product.image || `https://via.placeholder.com/300x300?text=${product.name}`}
+          src={
+            product.image ||
+            `https://via.placeholder.com/300x300?text=${product.name}`
+          }
           alt={product.name}
           width={300}
           height={300}
-          className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+          className="w-full h-full object-contain transition-transform duration-300 hover:scale-105"
         />
         {product.discount > 0 && (
           <span className="absolute top-2 left-2 bg-[#1a2649] text-white text-[10px] sm:text-xs font-semibold px-2 py-1 rounded">
@@ -33,7 +36,7 @@ const ProductCard = ({ product }) => {
 
         <div className="flex items-center text-xs sm:text-sm text-gray-600">
           <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#1a2649] fill-[#1a2649] mr-1" />
-          {product.rating} ({product.reviewCount} reviews)
+          {product.rating || 4.5} ({product.reviewCount || 0} reviews)
         </div>
 
         <div className="flex items-baseline gap-2">
@@ -56,7 +59,40 @@ const ProductCard = ({ product }) => {
   );
 };
 
-// Filter component for sidebar
+// New Shimmer UI Components
+const ProductCardSkeleton = () => {
+  return (
+    <div className="bg-white rounded-xl p-3 sm:p-4 border-1 overflow-hidden">
+      {/* Image placeholder */}
+      <div className="relative overflow-hidden rounded-lg bg-gray-200 mb-3 sm:mb-4 aspect-square">
+        <div className="absolute inset-0 w-full h-full animate-shimmer bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:400%_100%]" />
+      </div>
+
+      <div className="space-y-2 sm:space-y-3">
+        {/* Title placeholder */}
+        <div className="h-5 sm:h-6 bg-gray-200 rounded-md overflow-hidden relative">
+          <div className="absolute inset-0 w-full h-full animate-shimmer bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:400%_100%]" />
+        </div>
+
+        {/* Rating placeholder */}
+        <div className="h-4 sm:h-5 bg-gray-200 rounded-md w-2/3 overflow-hidden relative">
+          <div className="absolute inset-0 w-full h-full animate-shimmer bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:400%_100%]" />
+        </div>
+
+        {/* Price placeholder */}
+        <div className="h-5 sm:h-6 bg-gray-200 rounded-md w-1/2 overflow-hidden relative">
+          <div className="absolute inset-0 w-full h-full animate-shimmer bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:400%_100%]" />
+        </div>
+
+        {/* Button placeholder */}
+        <div className="h-8 sm:h-10 bg-gray-200 rounded-md overflow-hidden relative">
+          <div className="absolute inset-0 w-full h-full animate-shimmer bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:400%_100%]" />
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const FilterSection = ({ title, options, selectedOptions, onChange }) => {
   const [isOpen, setIsOpen] = useState(true);
 
@@ -67,9 +103,13 @@ const FilterSection = ({ title, options, selectedOptions, onChange }) => {
         onClick={() => setIsOpen(!isOpen)}
       >
         <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-        <ChevronDown className={`w-5 h-5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown
+          className={`w-5 h-5 transition-transform ${
+            isOpen ? "rotate-180" : ""
+          }`}
+        />
       </button>
-      
+
       {isOpen && (
         <div className="mt-3 space-y-2">
           {options.map((option) => (
@@ -104,152 +144,105 @@ const FilterSection = ({ title, options, selectedOptions, onChange }) => {
 };
 
 const AllProducts = () => {
-  // Memoize the products data so it doesn't cause re-renders
-  const allProducts = React.useMemo(() => [
-    // Your product data
-    {
-      name: "Pearl Drop Earrings",
-      price: 89.99,
-      originalPrice: 119.99,
-      rating: 4.8,
-      reviewCount: 126,
-      isNew: true,
-      discount: 25,
-      image: "/image/product.jpeg",
-      category: "earrings",
-      colors: ["gold", "silver", "rose-gold"]
-    },
-    {
-      name: "Crystal Necklace",
-      price: 129.99,
-      originalPrice: 159.99,
-      rating: 4.9,
-      reviewCount: 88,
-      isNew: true,
-      discount: 20,
-      image: "/image/product.jpeg",
-      category: "necklaces", 
-      colors: ["silver", "gold"]
-    },
-    // ... all your other products ...
-    {
-      name: "Emerald Pendant",
-      price: 229.99,
-      originalPrice: 279.99,
-      rating: 4.8,
-      reviewCount: 56,
-      isNew: true,
-      discount: 18,
-      image: "/image/product.jpeg",
-      category: "necklaces",
-      colors: ["gold", "silver"]
-    }
-  ], []);  // Empty dependency array means this only runs once
-
-  // State for filters and sorting
-  const [searchQuery, setSearchQuery] = useState("");
+  // State for API data
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true); // Start with loading true
+  const [totalPages, setTotalPages] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  
+  // State for filters
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedColors, setSelectedColors] = useState([]);
   const [priceRange, setPriceRange] = useState({ min: 0, max: 500 });
   const [sortBy, setSortBy] = useState("featured");
-  const [filteredProducts, setFilteredProducts] = useState([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  
-  // State for pagination
-  const [visibleProducts, setVisibleProducts] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const productsPerPage = 8;
-  const [hasMore, setHasMore] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
-  
-  // Effect to filter and sort products
-  useEffect(() => {
-    let result = [...allProducts];
 
-    // Apply search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(product => 
-        product.name.toLowerCase().includes(query)
+  // Fetch products from API
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      // Simulate network delay for demo purposes
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      const res = await fetch(
+        `/api/products?page=${currentPage}&search=${searchTerm}`
       );
+      const data = await res.json();
+
+      if (res.ok) {
+        setProducts(data.products);
+        setTotalPages(data.totalPages);
+      } else {
+        throw new Error(data.error || "Failed to fetch products");
+      }
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, [currentPage, searchTerm]);
+
+  // Filter and sort products
+  const filteredProducts = useMemo(() => {
+    let result = [...products];
 
     // Apply category filter
     if (selectedCategories.length > 0) {
-      result = result.filter(product => 
+      result = result.filter((product) =>
         selectedCategories.includes(product.category)
       );
     }
 
     // Apply color filter
     if (selectedColors.length > 0) {
-      result = result.filter(product => 
-        product.colors.some(color => selectedColors.includes(color))
+      result = result.filter((product) =>
+        product.colors?.some((color) => selectedColors.includes(color))
       );
     }
 
     // Apply price range filter
     result = result.filter(
-      product => product.price >= priceRange.min && product.price <= priceRange.max
+      (product) =>
+        product.price >= priceRange.min && product.price <= priceRange.max
     );
 
     // Apply sorting
     switch (sortBy) {
       case "price-low-high":
-        result.sort((a, b) => a.price - b.price);
-        break;
+        return result.sort((a, b) => a.price - b.price);
       case "price-high-low":
-        result.sort((a, b) => b.price - a.price);
-        break;
+        return result.sort((a, b) => b.price - a.price);
       case "newest":
-        result.sort((a, b) => (a.isNew === b.isNew ? 0 : a.isNew ? -1 : 1));
-        break;
+        return result.sort((a, b) => (a.isNew === b.isNew ? 0 : a.isNew ? -1 : 1));
       case "rating":
-        result.sort((a, b) => b.rating - a.rating);
-        break;
+        return result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
       case "discount":
-        result.sort((a, b) => b.discount - a.discount);
-        break;
-      default: // featured or any other case
-        // No sorting needed, keep original order
-        break;
+        return result.sort((a, b) => (b.discount || 0) - (a.discount || 0));
+      default:
+        return result;
     }
-    setFilteredProducts(result);
-    setCurrentPage(1);
-  }, [searchQuery, selectedCategories, selectedColors, priceRange, sortBy, allProducts]); // Added allProducts to dependency array
-  
-  // Second useEffect for pagination
-  useEffect(() => {
-    const endIndex = currentPage * productsPerPage;
-    setVisibleProducts(filteredProducts.slice(0, endIndex));
-    setHasMore(endIndex < filteredProducts.length);
-  }, [filteredProducts, currentPage, productsPerPage]);
-
-  const loadMoreProducts = () => {
-    setIsLoading(true);
-    
-    // Simulate network delay for loading more products
-    setTimeout(() => {
-      setCurrentPage(prev => prev + 1);
-      setIsLoading(false);
-    }, 500);
-  };
+  }, [products, selectedCategories, selectedColors, priceRange, sortBy]);
 
   const categoryOptions = [
     { label: "Earrings", value: "earrings" },
     { label: "Necklaces", value: "necklaces" },
     { label: "Bracelets", value: "bracelets" },
-    { label: "Rings", value: "rings" }
+    { label: "Rings", value: "rings" },
   ];
 
   const colorOptions = [
     { label: "Gold", value: "gold" },
     { label: "Silver", value: "silver" },
-    { label: "Rose Gold", value: "rose-gold" }
+    { label: "Rose Gold", value: "rose-gold" },
   ];
 
   return (
-    <section className="bg-white py-8 sm:py-12 lg:py-16 ">
+    <section className="bg-white py-8 sm:py-12 lg:py-16">
       <div className="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header Section */}
         <div className="text-center mt-28 mb-8 sm:mb-12">
@@ -268,8 +261,11 @@ const AllProducts = () => {
               type="text"
               className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-[#1a2649] focus:border-[#1a2649] block w-full pl-10 p-2.5"
               placeholder="Search products..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
             />
           </div>
 
@@ -281,7 +277,7 @@ const AllProducts = () => {
               <Filter className="w-4 h-4 mr-2" />
               Filters
             </button>
-            
+
             <div className="relative">
               <select
                 value={sortBy}
@@ -303,14 +299,20 @@ const AllProducts = () => {
         </div>
 
         <div className="flex flex-col md:flex-row gap-8">
-          {/* Filter Sidebar - Hide on mobile unless toggled */}
-          <aside className={`w-full md:w-64 md:block ${isFilterOpen ? 'block' : 'hidden'}`}>
+          {/* Filter Sidebar */}
+          <aside
+            className={`w-full md:w-64 md:block ${
+              isFilterOpen ? "block" : "hidden"
+            }`}
+          >
             <div className="bg-white p-4 rounded-lg border border-gray-200">
               <h2 className="text-xl font-bold text-[#1a2649] mb-4">Filters</h2>
 
               {/* Price Range Filter */}
               <div className="border-b border-gray-200 py-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Price Range</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  Price Range
+                </h3>
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">
@@ -323,7 +325,12 @@ const AllProducts = () => {
                     max="500"
                     step="10"
                     value={priceRange.max}
-                    onChange={(e) => setPriceRange({ ...priceRange, max: Number(e.target.value) })}
+                    onChange={(e) =>
+                      setPriceRange({
+                        ...priceRange,
+                        max: Number(e.target.value),
+                      })
+                    }
                     className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                   />
                 </div>
@@ -361,12 +368,32 @@ const AllProducts = () => {
 
           {/* Products Grid */}
           <div className="flex-1">
-            {filteredProducts.length === 0 ? (
+            {loading ? (
+              // Shimmer Effect while loading
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                {/* Add shimmer animation styles */}
+                <style jsx global>{`
+                  @keyframes shimmer {
+                    0% { background-position: 100% 50%; }
+                    100% { background-position: 0% 50%; }
+                  }
+                  .animate-shimmer {
+                    animation: shimmer 2s infinite linear;
+                  }
+                `}</style>
+                
+                {Array.from({ length: 8 }).map((_, index) => (
+                  <ProductCardSkeleton key={index} />
+                ))}
+              </div>
+            ) : filteredProducts.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-lg text-gray-600">No products match your filters.</p>
+                <p className="text-lg text-gray-600">
+                  No products match your filters.
+                </p>
                 <button
                   onClick={() => {
-                    setSearchQuery("");
+                    setSearchTerm("");
                     setSelectedCategories([]);
                     setSelectedColors([]);
                     setPriceRange({ min: 0, max: 500 });
@@ -379,30 +406,29 @@ const AllProducts = () => {
             ) : (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                  {visibleProducts.map((product, idx) => (
-                    <div key={idx}>
-                      <ProductCard product={product} />
-                    </div>
+                  {filteredProducts.map((product) => (
+                    <ProductCard key={product._id} product={product} />
                   ))}
                 </div>
-                
-                {/* Load More Button */}
-                {hasMore && (
-                  <div className="mt-8 text-center">
-                    <button
-                      onClick={loadMoreProducts}
-                      disabled={isLoading}
-                      className="px-8 py-2 bg-[#1a2649] text-white rounded-lg hover:bg-opacity-90 transition-colors disabled:bg-opacity-70 disabled:cursor-not-allowed"
-                    >
-                      {isLoading ? 'Loading...' : 'Load More Products'}
-                    </button>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="mt-8 flex justify-center gap-2">
+                    {Array.from({ length: totalPages }, (_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setCurrentPage(i + 1)}
+                        className={`px-4 py-2 rounded ${
+                          currentPage === i + 1
+                            ? "bg-[#1a2649] text-white"
+                            : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                        }`}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
                   </div>
                 )}
-                
-                {/* Products count */}
-                <div className="mt-6 text-sm text-gray-600">
-                  Showing {visibleProducts.length} of {filteredProducts.length} products
-                </div>
               </>
             )}
           </div>

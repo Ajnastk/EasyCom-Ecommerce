@@ -6,7 +6,17 @@ module.exports = {
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      keyframes: {
+        shimmer: {
+          '0%': { backgroundPosition: '-400% 0' },
+          '100%': { backgroundPosition: '400% 0' },
+        },
+      },
+      animation: {
+        shimmer: 'shimmer 1.2s infinite linear',
+      },
+    },
   },
   plugins: [],
-}
+};

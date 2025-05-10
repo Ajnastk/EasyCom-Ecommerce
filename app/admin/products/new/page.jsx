@@ -11,6 +11,7 @@ export default function AddProduct() {
   const [imagePreview, setImagePreview] = useState("");
   const [categories, setCategories] = useState([]);
   const [imageFile, setImageFile] = useState(null);
+  const [showSavingPopup, setShowSavingPopup] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -67,6 +68,7 @@ export default function AddProduct() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setShowSavingPopup(true);
 
     try {
       const form = new FormData();
@@ -90,11 +92,13 @@ export default function AddProduct() {
       }
 
       const data = await response.json();
+      setShowSavingPopup(false);
       // console.log("Product created successfully:", data);
       alert("Product created successfully!");
       router.push("/admin/products");
     } catch (error) {
       console.error("Error creating product:", error);
+      setShowSavingPopup(false);
       alert("Failed to create product");
       setLoading(false);
     }
@@ -102,6 +106,19 @@ export default function AddProduct() {
 
   return (
     <div className="bg-gray-50 min-h-screen">
+      {/* Saving Popup */}
+      {showSavingPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mr-3"></div>
+              <p className="text-lg font-medium text-gray-900">
+                Saving Product...
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center">
@@ -343,11 +360,9 @@ export default function AddProduct() {
             </Link>
             <button
               type="submit"
-              disabled={loading }
+              disabled={loading}
               className={`ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white ${
-                loading 
-                  ? "bg-indigo-400"
-                  : "bg-indigo-600 hover:bg-indigo-700"
+                loading ? "bg-indigo-400" : "bg-indigo-600 hover:bg-indigo-700"
               } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
             >
               {loading ? "Saving..." : "Save Product"}
