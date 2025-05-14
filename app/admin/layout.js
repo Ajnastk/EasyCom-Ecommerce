@@ -8,7 +8,6 @@ export default function AdminLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
-      <body>
         <AdminProvider>
           <div className="flex h-screen bg-gray-100">
             <AdminSidebar
@@ -25,6 +24,5 @@ export default function AdminLayout({ children }) {
             </div>
           </div>
         </AdminProvider>
-      </body>
   );
 }
