@@ -19,7 +19,6 @@ export default function ProductsAdmin() {
   const [totalPages, setTotalPages] = useState(1);
   const [deleting, setDeleting] = useState(false);
 
-
   useEffect(() => {
     fetchProducts();
   }, [currentPage, searchTerm]);
@@ -48,7 +47,7 @@ export default function ProductsAdmin() {
 
   const handleDelete = async (productId) => {
     if (confirm("Are you sure you want to delete this product?")) {
-      setDeleting(true)
+      setDeleting(true);
       try {
         const response = await fetch(`/api/products/${productId}`, {
           method: "DELETE",
@@ -57,16 +56,16 @@ export default function ProductsAdmin() {
         if (response.ok) {
           // Refresh the products list
           await fetchProducts();
-          setDeleting(false)
+          setDeleting(false);
           alert("Product deleted successfully");
         } else {
           const error = await response.json();
-          setDeleting(false)
+          setDeleting(false);
           throw new Error(error.error || "Failed to delete product");
         }
       } catch (error) {
         console.error("Error deleting product:", error);
-        setDeleting(false)
+        setDeleting(false);
         alert(error.message);
       }
     }
@@ -79,21 +78,20 @@ export default function ProductsAdmin() {
   };
 
   return (
-
     <div className="bg-gray-50 min-h-screen">
-    {/* Delete Popup */}
-    {deleting && (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
-          <div className="flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mr-3"></div>
-            <p className="text-lg font-medium text-gray-900">
-              Deleting Product...
-            </p>
+      {/* Delete Popup */}
+      {deleting && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mr-3"></div>
+              <p className="text-lg font-medium text-gray-900">
+                Deleting Product...
+              </p>
+            </div>
           </div>
         </div>
-      </div>
-    )}
+      )}
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Products</h1>
@@ -166,7 +164,7 @@ export default function ProductsAdmin() {
                   </tr>
                 ) : products.length === 0 ? (
                   <tr>
-                    <td 
+                    <td
                       colSpan="7"
                       className="px-6 py-4 text-center text-sm text-gray-500"
                     >
@@ -181,7 +179,7 @@ export default function ProductsAdmin() {
                           {product.name}
                         </div>
                         <div className="text-sm text-gray-500">
-                          ID: {product._id}
+                          No : {i + 1}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
