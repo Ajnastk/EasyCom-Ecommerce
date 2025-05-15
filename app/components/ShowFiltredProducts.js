@@ -4,109 +4,6 @@ import React, { useRef, useState, useEffect } from "react";
 import { ShoppingBag, Star, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 
-const mockProducts = [
-  {
-    name: "Wireless Headphones",
-    // image: "https://via.placeholder.com/300x300?text=Headphones",
-    price: 59.99,
-    originalPrice: 89.99,
-    discount: 33,
-    rating: 4.6,
-    reviewCount: 120,
-    isNew: true,
-  },
-  {
-    name: "Smartwatch Pro",
-    // image: "https://via.placeholder.com/300x300?text=Smartwatch",
-    price: 129.99,
-    originalPrice: 199.99,
-    discount: 35,
-    rating: 4.4,
-    reviewCount: 87,
-    isNew: false,
-  },
-  {
-    name: "Bluetooth Speaker",
-    // image: "https://via.placeholder.com/300x300?text=Speaker",
-    price: 39.99,
-    originalPrice: 49.99,
-    discount: 20,
-    rating: 4.8,
-    reviewCount: 210,
-    isNew: true,
-  },
-  {
-    name: "Gaming Mouse",
-    // image: "https://via.placeholder.com/300x300?text=Mouse",
-    price: 24.99,
-    originalPrice: 29.99,
-    discount: 17,
-    rating: 4.3,
-    reviewCount: 45,
-    isNew: false,
-  },
-  {
-    name: "Mechanical Keyboard",
-    // image: "https://via.placeholder.com/300x300?text=Keyboard",
-    price: 69.99,
-    originalPrice: 89.99,
-    discount: 22,
-    rating: 4.7,
-    reviewCount: 133,
-    isNew: true,
-  },
-  {
-    name: "Portable SSD 1TB",
-    // image: "https://via.placeholder.com/300x300?text=SSD",
-    price: 99.99,
-    originalPrice: 129.99,
-    discount: 23,
-    rating: 4.9,
-    reviewCount: 324,
-    isNew: false,
-  },
-  {
-    name: "Noise Cancelling Earbuds",
-    // image: "https://via.placeholder.com/300x300?text=Earbuds",
-    price: 79.99,
-    originalPrice: 109.99,
-    discount: 27,
-    rating: 4.5,
-    reviewCount: 76,
-    isNew: true,
-  },
-  {
-    name: "Fitness Tracker Band",
-    // image: "https://via.placeholder.com/300x300?text=Fitness+Band",
-    price: 49.99,
-    originalPrice: 59.99,
-    discount: 17,
-    rating: 4.2,
-    reviewCount: 58,
-    isNew: false,
-  },
-  {
-    name: "Action Camera 4K",
-    // image: "https://via.placeholder.com/300x300?text=Camera",
-    price: 149.99,
-    originalPrice: 199.99,
-    discount: 25,
-    rating: 4.6,
-    reviewCount: 99,
-    isNew: true,
-  },
-  {
-    name: "Laptop Stand Adjustable",
-    // image: "https://via.placeholder.com/300x300?text=Laptop+Stand",
-    price: 34.99,
-    originalPrice: 44.99,
-    discount: 22,
-    rating: 4.3,
-    reviewCount: 39,
-    isNew: false,
-  },
-];
-
 const ProductCard = ({ product }) => {
   return (
     <div className="bg-white rounded-xl p-3 sm:p-4 border-1 hover:shadow-lg transition-shadow duration-300">
@@ -196,7 +93,7 @@ const ProductCardSkeleton = () => {
   );
 };
 
-const TopProducts = () => {
+const ShowFiltredProducts = ({ productType }) => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -210,23 +107,13 @@ const TopProducts = () => {
     fetchTopProducts();
   }, []);
 
-  
   // Fetch top products from API
   const fetchTopProducts = async () => {
-    setLoading(true);
     try {
-      // Simulate network delay for demo purposes
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      const res = await fetch("/api/products");
+      const res = await fetch(`/api/products?${productType}=true&limit=10`);
       const data = await res.json();
 
-      if (res.ok) {
-        setProducts(data.products);
-      } else {
-        setProducts(mockProducts);
-        // throw new Error(data.error || "Failed to fetch top products");
-      }
+      setProducts(data.products);
     } catch (error) {
       console.error("Error fetching top products:", error);
       setError(error.message);
@@ -234,7 +121,6 @@ const TopProducts = () => {
       setLoading(false);
     }
   };
-
 
   useEffect(() => {
     const checkScrollable = () => {
@@ -279,14 +165,27 @@ const TopProducts = () => {
       <div className="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header - responsive text sizes */}
         <div className="text-center mb-8 sm:mb-12">
-          <h2 className="text-center">
-            <span className="text-xl sm:text-2xl md:text-3xl text-gray-800">
-              Top{" "}
-            </span>
-            <span className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
-              Picks
-            </span>
-          </h2>
+          {productType === "isTop" ? (
+            <h2 className="text-center">
+              <span className="text-xl sm:text-2xl md:text-3xl text-gray-800">
+                Top{" "}
+              </span>
+              <span className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
+                Picks
+              </span>
+            </h2>
+          ) : productType === "isNew" ? (
+            <h2 className="text-center">
+              <span className="text-xl sm:text-2xl md:text-3xl text-gray-800">
+                New
+              </span>
+              <span className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
+                Picks
+              </span>
+            </h2>
+          ) : (
+            <h2></h2>
+          )}
           <p className="mt-2 text-base sm:text-lg text-gray-600 max-w-2xl mx-auto">
             Discover our handpicked selection of premium Perfume that define
             your attractiveness.
@@ -384,4 +283,4 @@ const TopProducts = () => {
   );
 };
 
-export default TopProducts;
+export default ShowFiltredProducts;

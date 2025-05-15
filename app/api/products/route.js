@@ -25,6 +25,8 @@ export async function POST(request) {
     const category = formData.get("category") || "";
     const stock = parseInt(formData.get("stock")) || 0;
     const color = formData.get("color");
+    const isNew = formData.get("isNew") || false;
+    const isTop = formData.get("isTop") || false;
 
     // Basic validation
     if (!name) {
@@ -60,7 +62,7 @@ export async function POST(request) {
                 console.error("Cloudinary upload error:", error);
                 reject(error);
               } else {
-                console.log("Cloudinary upload success");
+                // console.log("Cloudinary upload success");
                 resolve(result);
               }
             }
@@ -93,6 +95,8 @@ export async function POST(request) {
       category,
       stock,
       color,
+      isNew,
+      isTop
     };
 
     // Save to database
@@ -123,33 +127,110 @@ export async function POST(request) {
 export async function GET(request) {
   try {
     await dbConnect();
-
     const { searchParams } = new URL(request.url);
+    
+    // Get pagination parameters
     const page = parseInt(searchParams.get("page")) || 1;
-    const limit = parseInt(searchParams.get("limit")) || 10;
-    const search = searchParams.get("search") || "";
-
+    const limit = parseInt(searchParams.get("limit")) || 5; // Changed to 5 for more pages with 10 products
     const skip = (page - 1) * limit;
-
-    // Build query for search
-    const query = search ? { name: { $regex: search, $options: "i" } } : {};
-
-    // Get products with category population and total count
+    
+    // Get filter parameters
+    const search = searchParams.get("search") || "";
+    const categories = searchParams.get("categories")?.split(",").filter(Boolean) || [];
+    const colors = searchParams.get("colors")?.split(",").filter(Boolean) || [];
+    const minPrice = parseFloat(searchParams.get("minPrice")) || 0;
+    const maxPrice = parseFloat(searchParams.get("maxPrice")) || 9999;
+    const sortBy = searchParams.get("sortBy") || "featured";
+    const isNew = searchParams.get("isNew");
+    const isTop = searchParams.get("isTop");
+    
+    // Build query object
+    const query = {};
+    
+    // Text search
+    if (search) {
+      query.name = { $regex: search, $options: "i" };
+    }
+    
+    // Categories filter
+    if (categories.length > 0) {
+      // Find category IDs based on category names
+      const categoryDocs = await Category.find({
+        name: { $in: categories.map(c => new RegExp(c, 'i')) }
+      });
+      
+      if (categoryDocs.length > 0) {
+        query.category = { $in: categoryDocs.map(c => c._id) };
+      }
+    }
+    
+    // Colors filter
+    if (colors.length > 0) {
+      query.color = { $in: colors.map(c => new RegExp(c, 'i')) };
+    }
+    
+    // Price range filter
+    query.price = { $gte: minPrice, $lte: maxPrice };
+    
+    // Boolean filters
+    if (isNew === "true") {
+      query.isNew = true;
+    }
+    if (isTop === "true") {
+      query.isTop = true;
+    }
+    
+    // Determine sort options
+    let sortOptions = {};
+    switch (sortBy) {
+      case "price-low-high":
+        sortOptions = { price: 1 };
+        break;
+      case "price-high-low":
+        sortOptions = { price: -1 };
+        break;
+      case "newest":
+        sortOptions = { createdAt: -1 };
+        break;
+      case "rating":
+        sortOptions = { rating: -1 };
+        break;
+      case "discount":
+        sortOptions = { discount: -1 };
+        break;
+      default:
+        // Featured - could be a combination of factors or just use default _id
+        sortOptions = { _id: -1 };
+    }
+    
+    // console.log("Query:", JSON.stringify(query));
+    // console.log("Skip:", skip, "Limit:", limit);
+    
+    // Execute query with proper pagination
     const [products, total] = await Promise.all([
       productModel
         .find(query)
         .populate("category", "name")
+        .sort(sortOptions)
         .skip(skip)
         .limit(limit),
       productModel.countDocuments(query),
     ]);
-
+    
+    // console.log("Found products:", products.length);
+    // console.log("Total matching products:", total);
+    
+    // Make sure we calculate total pages correctly
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    
     return NextResponse.json({
       products,
-      totalPages: Math.ceil(total / limit),
+      totalPages: totalPages,
       currentPage: page,
+      totalProducts: total
     });
   } catch (error) {
+    console.error("API Error:", error);
     return NextResponse.json(
       { error: "Failed to fetch products: " + error.message },
       { status: 500 }

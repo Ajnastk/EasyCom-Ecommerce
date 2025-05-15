@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { ShoppingBag, Star, Search, Filter, ChevronDown } from "lucide-react";
 
@@ -59,7 +59,6 @@ const ProductCard = ({ product }) => {
   );
 };
 
-// New Shimmer UI Components
 const ProductCardSkeleton = () => {
   return (
     <div className="bg-white rounded-xl p-3 sm:p-4 border-1 overflow-hidden">
@@ -146,36 +145,52 @@ const FilterSection = ({ title, options, selectedOptions, onChange }) => {
 const AllProducts = () => {
   // State for API data
   const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true); // Start with loading true
+  const [loading, setLoading] = useState(true);
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   // State for filters
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedColors, setSelectedColors] = useState([]);
-  const [priceRange, setPriceRange] = useState({ min: 0, max: 500 });
+  const [priceRange, setPriceRange] = useState({ min: 0, max: 50000 });
   const [sortBy, setSortBy] = useState("featured");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-
-  // Fetch products from API
+  
+  // Modified to properly handle server-side filtering
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      // Simulate network delay for demo purposes
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Construct URL with all filter parameters
+      let url = `/api/products?page=${currentPage}&limit=4&search=${searchTerm}`;
       
-      const res = await fetch(
-        `/api/products?page=${currentPage}&search=${searchTerm}`
-      );
-      const data = await res.json();
+      // We'll move filtering to the server side
+      if (selectedCategories.length > 0) {
+        url += `&categories=${selectedCategories.join(',')}`;
+      }
+      
+      if (selectedColors.length > 0) {
+        url += `&colors=${selectedColors.join(',')}`;
+      }
+      
+      url += `&minPrice=${priceRange.min}&maxPrice=${priceRange.max}`;
+      
+      if (sortBy) {
+        url += `&sortBy=${sortBy}`;
+      }
 
-      if (res.ok) {
-        setProducts(data.products);
-        setTotalPages(data.totalPages);
-      } else {
+      // console.log("Fetching products from:", url);
+
+      const res = await fetch(url);
+      const data = await res.json();
+      
+      if (!res.ok) {
         throw new Error(data.error || "Failed to fetch products");
       }
+
+      setProducts(data.products);
+      setTotalPages(data.totalPages);
+      // console.log(`Loaded ${data.products.length} products. Total pages: ${data.totalPages}, Total products: ${data.totalProducts}`);
     } catch (error) {
       console.error("Error fetching products:", error);
     } finally {
@@ -185,49 +200,9 @@ const AllProducts = () => {
 
   useEffect(() => {
     fetchProducts();
-  }, [currentPage, searchTerm]);
+  }, [currentPage, searchTerm, selectedCategories, selectedColors, priceRange, sortBy]);
 
-  // Filter and sort products
-  const filteredProducts = useMemo(() => {
-    let result = [...products];
-
-    // Apply category filter
-    if (selectedCategories.length > 0) {
-      result = result.filter((product) =>
-        selectedCategories.includes(product.category)
-      );
-    }
-
-    // Apply color filter
-    if (selectedColors.length > 0) {
-      result = result.filter((product) =>
-        product.colors?.some((color) => selectedColors.includes(color))
-      );
-    }
-
-    // Apply price range filter
-    result = result.filter(
-      (product) =>
-        product.price >= priceRange.min && product.price <= priceRange.max
-    );
-
-    // Apply sorting
-    switch (sortBy) {
-      case "price-low-high":
-        return result.sort((a, b) => a.price - b.price);
-      case "price-high-low":
-        return result.sort((a, b) => b.price - a.price);
-      case "newest":
-        return result.sort((a, b) => (a.isNew === b.isNew ? 0 : a.isNew ? -1 : 1));
-      case "rating":
-        return result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-      case "discount":
-        return result.sort((a, b) => (b.discount || 0) - (a.discount || 0));
-      default:
-        return result;
-    }
-  }, [products, selectedCategories, selectedColors, priceRange, sortBy]);
-
+  // Define category options
   const categoryOptions = [
     { label: "Earrings", value: "earrings" },
     { label: "Necklaces", value: "necklaces" },
@@ -236,10 +211,18 @@ const AllProducts = () => {
   ];
 
   const colorOptions = [
-    { label: "Gold", value: "gold" },
+    { label: "Black", value: "Black" },
     { label: "Silver", value: "silver" },
     { label: "Rose Gold", value: "rose-gold" },
   ];
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setSelectedCategories([]);
+    setSelectedColors([]);
+    setPriceRange({ min: 0, max: 500 });
+    setCurrentPage(1);
+  };
 
   return (
     <section className="bg-white py-8 sm:py-12 lg:py-16">
@@ -264,7 +247,7 @@ const AllProducts = () => {
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
-                setCurrentPage(1);
+                setCurrentPage(1); // Reset to first page on search
               }}
             />
           </div>
@@ -281,7 +264,10 @@ const AllProducts = () => {
             <div className="relative">
               <select
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
+                onChange={(e) => {
+                  setSortBy(e.target.value);
+                  setCurrentPage(1); // Reset to first page on sort change
+                }}
                 className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-[#1a2649] focus:border-[#1a2649] block w-full p-2.5 pr-8 appearance-none"
               >
                 <option value="featured">Featured</option>
@@ -325,12 +311,13 @@ const AllProducts = () => {
                     max="500"
                     step="10"
                     value={priceRange.max}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setPriceRange({
                         ...priceRange,
                         max: Number(e.target.value),
-                      })
-                    }
+                      });
+                      setCurrentPage(1); // Reset to first page on filter change
+                    }}
                     className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                   />
                 </div>
@@ -341,7 +328,10 @@ const AllProducts = () => {
                 title="Categories"
                 options={categoryOptions}
                 selectedOptions={selectedCategories}
-                onChange={setSelectedCategories}
+                onChange={(newCategories) => {
+                  setSelectedCategories(newCategories);
+                  setCurrentPage(1); // Reset to first page on filter change
+                }}
               />
 
               {/* Color Filter */}
@@ -349,16 +339,15 @@ const AllProducts = () => {
                 title="Colors"
                 options={colorOptions}
                 selectedOptions={selectedColors}
-                onChange={setSelectedColors}
+                onChange={(newColors) => {
+                  setSelectedColors(newColors);
+                  setCurrentPage(1); // Reset to first page on filter change
+                }}
               />
 
               {/* Clear Filters Button */}
               <button
-                onClick={() => {
-                  setSelectedCategories([]);
-                  setSelectedColors([]);
-                  setPriceRange({ min: 0, max: 500 });
-                }}
+                onClick={clearFilters}
                 className="mt-4 w-full py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors text-sm"
               >
                 Clear All Filters
@@ -374,30 +363,29 @@ const AllProducts = () => {
                 {/* Add shimmer animation styles */}
                 <style jsx global>{`
                   @keyframes shimmer {
-                    0% { background-position: 100% 50%; }
-                    100% { background-position: 0% 50%; }
+                    0% {
+                      background-position: 100% 50%;
+                    }
+                    100% {
+                      background-position: 0% 50%;
+                    }
                   }
                   .animate-shimmer {
                     animation: shimmer 2s infinite linear;
                   }
                 `}</style>
-                
+
                 {Array.from({ length: 8 }).map((_, index) => (
                   <ProductCardSkeleton key={index} />
                 ))}
               </div>
-            ) : filteredProducts.length === 0 ? (
+            ) : products.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-lg text-gray-600">
                   No products match your filters.
                 </p>
                 <button
-                  onClick={() => {
-                    setSearchTerm("");
-                    setSelectedCategories([]);
-                    setSelectedColors([]);
-                    setPriceRange({ min: 0, max: 500 });
-                  }}
+                  onClick={clearFilters}
                   className="mt-4 px-6 py-2 bg-[#1a2649] text-white rounded-lg hover:bg-opacity-90 transition-colors"
                 >
                   Clear Filters
@@ -406,27 +394,69 @@ const AllProducts = () => {
             ) : (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                  {filteredProducts.map((product) => (
+                  {products.map((product) => (
                     <ProductCard key={product._id} product={product} />
                   ))}
                 </div>
 
                 {/* Pagination */}
-                {totalPages > 1 && (
+                {totalPages > 0 && (
                   <div className="mt-8 flex justify-center gap-2">
-                    {Array.from({ length: totalPages }, (_, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setCurrentPage(i + 1)}
-                        className={`px-4 py-2 rounded ${
-                          currentPage === i + 1
-                            ? "bg-[#1a2649] text-white"
-                            : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                        }`}
-                      >
-                        {i + 1}
-                      </button>
-                    ))}
+                    {/* Previous Page Button */}
+                    <button
+                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                      disabled={currentPage === 1}
+                      className={`px-4 py-2 rounded ${
+                        currentPage === 1
+                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                      }`}
+                    >
+                      Prev
+                    </button>
+                    
+                    {/* Page Buttons - with logic to show ellipsis for many pages */}
+                    {Array.from({ length: totalPages }, (_, i) => {
+                      const pageNum = i + 1;
+                      // Show current page and 1 page before/after
+                      if (
+                        pageNum === 1 ||
+                        pageNum === totalPages ||
+                        (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                      ) {
+                        return (
+                          <button
+                            key={pageNum}
+                            onClick={() => setCurrentPage(pageNum)}
+                            className={`px-4 py-2 rounded ${
+                              currentPage === pageNum
+                                ? "bg-[#1a2649] text-white"
+                                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      }
+                      // Show ellipsis
+                      if (pageNum === currentPage - 2 || pageNum === currentPage + 2) {
+                        return <span key={pageNum} className="px-2 py-2">...</span>;
+                      }
+                      return null;
+                    })}
+                    
+                    {/* Next Page Button */}
+                    <button
+                      onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                      disabled={currentPage === totalPages}
+                      className={`px-4 py-2 rounded ${
+                        currentPage === totalPages
+                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                      }`}
+                    >
+                      Next
+                    </button>
                   </div>
                 )}
               </>

@@ -48,6 +48,8 @@ export async function PUT(request, { params }) {
     const status = formData.get("status");
     const brand = formData.get("brand");
     const color = formData.get("color");
+    const isNew = formData.get("isNew");
+    const isTop = formData.get("isTop");
     const newImage = formData.get("images");
     const imagesToRemove = formData.get("imagesToRemove") === "true";
 
@@ -158,6 +160,8 @@ export async function PUT(request, { params }) {
           status,
           brand,
           color,
+          isNew,
+          isTop,
           image: imageUrl,
           images: updatedImages,
         },
