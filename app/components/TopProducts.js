@@ -206,6 +206,11 @@ const TopProducts = () => {
   const [scrollPosition, setScrollPosition] = useState(0);
   const [maxScroll, setMaxScroll] = useState(0);
 
+  useEffect(() => {
+    fetchTopProducts();
+  }, []);
+
+  
   // Fetch top products from API
   const fetchTopProducts = async () => {
     setLoading(true);
@@ -230,9 +235,6 @@ const TopProducts = () => {
     }
   };
 
-  useEffect(() => {
-    fetchTopProducts();
-  }, []);
 
   useEffect(() => {
     const checkScrollable = () => {
