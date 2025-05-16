@@ -146,9 +146,12 @@ const AllProducts = () => {
   // State for API data
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [categoryLoading, setCategoryLoading] = useState(true);
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
+  const [categories, setCategories] = useState([]);
+  const [filterTimeout, setFilterTimeout] = useState(null);
 
   // State for filters
   const [selectedCategories, setSelectedCategories] = useState([]);
@@ -156,25 +159,26 @@ const AllProducts = () => {
   const [priceRange, setPriceRange] = useState({ min: 0, max: 50000 });
   const [sortBy, setSortBy] = useState("featured");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  
+
   // Modified to properly handle server-side filtering
   const fetchProducts = async () => {
     setLoading(true);
     try {
       // Construct URL with all filter parameters
       let url = `/api/products?page=${currentPage}&limit=4&search=${searchTerm}`;
-      
+
       // We'll move filtering to the server side
       if (selectedCategories.length > 0) {
-        url += `&categories=${selectedCategories.join(',')}`;
+        url += `&categories=${selectedCategories.join(",")}`;
+        // console.log(url);
       }
-      
+
       if (selectedColors.length > 0) {
-        url += `&colors=${selectedColors.join(',')}`;
+        url += `&colors=${selectedColors.join(",")}`;
       }
-      
+
       url += `&minPrice=${priceRange.min}&maxPrice=${priceRange.max}`;
-      
+
       if (sortBy) {
         url += `&sortBy=${sortBy}`;
       }
@@ -183,7 +187,7 @@ const AllProducts = () => {
 
       const res = await fetch(url);
       const data = await res.json();
-      
+
       if (!res.ok) {
         throw new Error(data.error || "Failed to fetch products");
       }
@@ -199,19 +203,52 @@ const AllProducts = () => {
   };
 
   useEffect(() => {
+    const fetchCategories = async () => {
+      setCategoryLoading(true);
+      try {
+        const res = await fetch(`/api/categories`);
+        const data = await res.json();
+
+        const filtered = data.filter((category) => category.name.toLowerCase());
+        // console.log(filtered);
+
+        setCategories(filtered);
+
+        // setTotalPages(2); // Optional: calculate total pages based on result length
+        setCategoryLoading(false);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        setCategoryLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  // console.log("categoies", categories);
+
+  useEffect(() => {
     fetchProducts();
-  }, [currentPage, searchTerm, selectedCategories, selectedColors, priceRange, sortBy]);
+  }, [
+    currentPage,
+    searchTerm,
+    selectedCategories,
+    selectedColors,
+    priceRange,
+    sortBy,
+  ]);
 
   // Define category options
-  const categoryOptions = [
-    { label: "Earrings", value: "earrings" },
-    { label: "Necklaces", value: "necklaces" },
-    { label: "Bracelets", value: "bracelets" },
-    { label: "Rings", value: "rings" },
-  ];
+  // const categoryOptions = [
+  //   { label: "Earrings", value: "earrings" },
+  //   { label: "Necklaces", value: "necklaces" },
+  //   { label: "Bracelets", value: "bracelets" },
+  //   { label: "Rings", value: "rings" },
+  // ];
 
   const colorOptions = [
     { label: "Black", value: "Black" },
+    { label: "Green", value: "green" },
     { label: "Silver", value: "silver" },
     { label: "Rose Gold", value: "rose-gold" },
   ];
@@ -308,7 +345,7 @@ const AllProducts = () => {
                   <input
                     type="range"
                     min="0"
-                    max="500"
+                    max="5000"
                     step="10"
                     value={priceRange.max}
                     onChange={(e) => {
@@ -322,18 +359,31 @@ const AllProducts = () => {
                   />
                 </div>
               </div>
+              {categoryLoading ? (
+                <div>Loading categories...</div>
+              ) : (
+                Array.isArray(categories) && (
+                  <FilterSection
+                    title="Categories"
+                    options={categories.map((category) => ({
+                      label: category.name,
+                      value: category._id, // Use name consistently
+                    }))}
+                    selectedOptions={selectedCategories}
+                    onChange={(newCategories) => {
+                      setSelectedCategories(newCategories);
 
-              {/* Category Filter */}
-              <FilterSection
-                title="Categories"
-                options={categoryOptions}
-                selectedOptions={selectedCategories}
-                onChange={(newCategories) => {
-                  setSelectedCategories(newCategories);
-                  setCurrentPage(1); // Reset to first page on filter change
-                }}
-              />
-
+                      // Debounce the filter update
+                      clearTimeout(filterTimeout);
+                      setFilterTimeout(
+                        setTimeout(() => {
+                          setCurrentPage(1);
+                        }, 500) // 500ms delay
+                      );
+                    }}
+                  />
+                )
+              )}
               {/* Color Filter */}
               <FilterSection
                 title="Colors"
@@ -404,7 +454,9 @@ const AllProducts = () => {
                   <div className="mt-8 flex justify-center gap-2">
                     {/* Previous Page Button */}
                     <button
-                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                      onClick={() =>
+                        setCurrentPage(Math.max(1, currentPage - 1))
+                      }
                       disabled={currentPage === 1}
                       className={`px-4 py-2 rounded ${
                         currentPage === 1
@@ -414,7 +466,7 @@ const AllProducts = () => {
                     >
                       Prev
                     </button>
-                    
+
                     {/* Page Buttons - with logic to show ellipsis for many pages */}
                     {Array.from({ length: totalPages }, (_, i) => {
                       const pageNum = i + 1;
@@ -422,7 +474,8 @@ const AllProducts = () => {
                       if (
                         pageNum === 1 ||
                         pageNum === totalPages ||
-                        (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                        (pageNum >= currentPage - 1 &&
+                          pageNum <= currentPage + 1)
                       ) {
                         return (
                           <button
@@ -439,15 +492,24 @@ const AllProducts = () => {
                         );
                       }
                       // Show ellipsis
-                      if (pageNum === currentPage - 2 || pageNum === currentPage + 2) {
-                        return <span key={pageNum} className="px-2 py-2">...</span>;
+                      if (
+                        pageNum === currentPage - 2 ||
+                        pageNum === currentPage + 2
+                      ) {
+                        return (
+                          <span key={pageNum} className="px-2 py-2">
+                            ...
+                          </span>
+                        );
                       }
                       return null;
                     })}
-                    
+
                     {/* Next Page Button */}
                     <button
-                      onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                      onClick={() =>
+                        setCurrentPage(Math.min(totalPages, currentPage + 1))
+                      }
                       disabled={currentPage === totalPages}
                       className={`px-4 py-2 rounded ${
                         currentPage === totalPages

@@ -96,7 +96,7 @@ export async function POST(request) {
       stock,
       color,
       isNew,
-      isTop
+      isTop,
     };
 
     // Save to database
@@ -105,18 +105,18 @@ export async function POST(request) {
     return NextResponse.json(newProduct, { status: 201 });
   } catch (error) {
     console.error("Error creating product:", error);
-    
+
     // Special handling for duplicate key errors
     if (error.code === 11000) {
       return NextResponse.json(
-        { 
-          error: "Product with this name already exists", 
-          message: "Please use a different product name" 
+        {
+          error: "Product with this name already exists",
+          message: "Please use a different product name",
         },
         { status: 409 } // Conflict status code
       );
     }
-    
+
     return NextResponse.json(
       { error: "Failed to create product", message: error.message },
       { status: 500 }
@@ -128,50 +128,48 @@ export async function GET(request) {
   try {
     await dbConnect();
     const { searchParams } = new URL(request.url);
-    
+
     // Get pagination parameters
     const page = parseInt(searchParams.get("page")) || 1;
     const limit = parseInt(searchParams.get("limit")) || 5; // Changed to 5 for more pages with 10 products
     const skip = (page - 1) * limit;
-    
+
     // Get filter parameters
     const search = searchParams.get("search") || "";
-    const categories = searchParams.get("categories")?.split(",").filter(Boolean) || [];
+    const categories =
+      searchParams.get("categories")?.split(",").filter(Boolean) || [];
+    // console.log("Category", categories);
+
     const colors = searchParams.get("colors")?.split(",").filter(Boolean) || [];
     const minPrice = parseFloat(searchParams.get("minPrice")) || 0;
     const maxPrice = parseFloat(searchParams.get("maxPrice")) || 9999;
     const sortBy = searchParams.get("sortBy") || "featured";
     const isNew = searchParams.get("isNew");
     const isTop = searchParams.get("isTop");
-    
+
     // Build query object
     const query = {};
-    
+
     // Text search
     if (search) {
       query.name = { $regex: search, $options: "i" };
     }
-    
+
     // Categories filter
     if (categories.length > 0) {
-      // Find category IDs based on category names
-      const categoryDocs = await Category.find({
-        name: { $in: categories.map(c => new RegExp(c, 'i')) }
-      });
-      
-      if (categoryDocs.length > 0) {
-        query.category = { $in: categoryDocs.map(c => c._id) };
-      }
+      query.category = { $in: categories };
     }
+
+    // console.log(query.category);
     
     // Colors filter
     if (colors.length > 0) {
-      query.color = { $in: colors.map(c => new RegExp(c, 'i')) };
+      query.color = { $in: colors };
     }
-    
+
     // Price range filter
     query.price = { $gte: minPrice, $lte: maxPrice };
-    
+
     // Boolean filters
     if (isNew === "true") {
       query.isNew = true;
@@ -179,7 +177,7 @@ export async function GET(request) {
     if (isTop === "true") {
       query.isTop = true;
     }
-    
+
     // Determine sort options
     let sortOptions = {};
     switch (sortBy) {
@@ -202,32 +200,31 @@ export async function GET(request) {
         // Featured - could be a combination of factors or just use default _id
         sortOptions = { _id: -1 };
     }
-    
+
     // console.log("Query:", JSON.stringify(query));
     // console.log("Skip:", skip, "Limit:", limit);
-    
+
     // Execute query with proper pagination
     const [products, total] = await Promise.all([
       productModel
         .find(query)
-        .populate("category", "name")
         .sort(sortOptions)
         .skip(skip)
         .limit(limit),
       productModel.countDocuments(query),
     ]);
-    
+
     // console.log("Found products:", products.length);
     // console.log("Total matching products:", total);
-    
+
     // Make sure we calculate total pages correctly
     const totalPages = Math.max(1, Math.ceil(total / limit));
-    
+
     return NextResponse.json({
       products,
       totalPages: totalPages,
       currentPage: page,
-      totalProducts: total
+      totalProducts: total,
     });
   } catch (error) {
     console.error("API Error:", error);
