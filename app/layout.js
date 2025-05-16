@@ -5,7 +5,7 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import { Providers } from "./providers";
 import { usePathname } from 'next/navigation'; // <-- Important
-import { SpeedInsights } from "@vercel/speed-insights/next"
+// import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,7 +31,7 @@ export default function RootLayout({ children }) {
       <Providers>
       {!isAdminRoute && <Navbar />}
         {children}
-        <SpeedInsights/>
+     {/* <SpeedInsights/> */}
       {!isAdminRoute && <Footer />}
        </Providers>
 
