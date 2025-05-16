@@ -1,69 +1,72 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
+
+const heroProducts = [
+  {
+    id: 1,
+    title: "Premium Collection",
+    tagline: "Elevate Your Style",
+    description:
+      "Discover our handcrafted luxury items designed for the discerning customer",
+    badge: "New Season",
+    color: "bg-indigo-600",
+    accentColor: "bg-indigo-400",
+    textColor: "text-indigo-100",
+  },
+  {
+    id: 2,
+    title: "Limited Edition",
+    tagline: "Exclusive Release",
+    description:
+      "Premium products with limited availability, crafted for perfection",
+    badge: "Trending",
+    cta: "View Exclusives",
+    color: "bg-amber-600",
+    accentColor: "bg-amber-400",
+    textColor: "text-amber-100",
+  },
+  {
+    id: 3,
+    title: "Signature Series",
+    tagline: "Iconic Essentials",
+    description:
+      "Timeless classics reimagined with modern techniques and materials",
+    badge: "Best Seller",
+    cta: "Explore Series",
+    color: "bg-emerald-700",
+    accentColor: "bg-emerald-500",
+    textColor: "text-emerald-100",
+  },
+];
 
 const PremiumHero = () => {
   const [activeSlide, setActiveSlide] = useState(0);
   const [animating, setAnimating] = useState(false);
   const timerRef = useRef(null);
 
-  const heroProducts = [
-    {
-      id: 1,
-      title: "Premium Collection",
-      tagline: "Elevate Your Style",
-      description:
-        "Discover our handcrafted luxury items designed for the discerning customer",
-      badge: "New Season",
-      color: "bg-indigo-600",
-      accentColor: "bg-indigo-400",
-      textColor: "text-indigo-100",
+  const handleSlideChange = useCallback(
+    (index) => {
+      if (animating || index === activeSlide) return;
+      setAnimating(true);
+      setActiveSlide(index);
+      setTimeout(() => setAnimating(false), 750);
     },
-    {
-      id: 2,
-      title: "Limited Edition",
-      tagline: "Exclusive Release",
-      description:
-        "Premium products with limited availability, crafted for perfection",
-      badge: "Trending",
-      cta: "View Exclusives",
-      color: "bg-amber-600",
-      accentColor: "bg-amber-400",
-      textColor: "text-amber-100",
-    },
-    {
-      id: 3,
-      title: "Signature Series",
-      tagline: "Iconic Essentials",
-      description:
-        "Timeless classics reimagined with modern techniques and materials",
-      badge: "Best Seller",
-      cta: "Explore Series",
-      color: "bg-emerald-700",
-      accentColor: "bg-emerald-500",
-      textColor: "text-emerald-100",
-    },
-  ];
+    [animating, activeSlide]
+  );
 
-  const handleSlideChange = (index) => {
-    if (animating || index === activeSlide) return;
-    setAnimating(true);
-    setActiveSlide(index);
-    setTimeout(() => setAnimating(false), 750);
-  };
-
-  const startAutoSlide = () => {
+  const startAutoSlide = useCallback(() => {
     timerRef.current = setInterval(() => {
       const nextSlide = (activeSlide + 1) % heroProducts.length;
       handleSlideChange(nextSlide);
     }, 6000);
-  };
+  }, [activeSlide, handleSlideChange]);
 
   useEffect(() => {
     startAutoSlide();
     return () => clearInterval(timerRef.current);
-  }, []);
+  }, [startAutoSlide]);
 
   const resetTimer = () => {
     clearInterval(timerRef.current);
@@ -92,7 +95,6 @@ const PremiumHero = () => {
             ></div>
 
             <div className="relative z-20 flex flex-col md:flex-row items-center justify-between w-full max-w-7xl px-6 mx-auto py-20 md:py-0">
-              {/* Text */}
               <div className="text-white space-y-6 w-full md:w-1/2">
                 <h1 className="text-4xl md:text-6xl font-bold">{product.title}</h1>
                 <p className="text-2xl opacity-90">{product.tagline}</p>

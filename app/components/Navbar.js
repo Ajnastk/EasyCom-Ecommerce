@@ -7,6 +7,19 @@ import { AuthModal, UserMenu } from './AuthModal'; // Import the auth components
 import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
 
+
+// Move this to the top, outside the component
+const NAV_LINKS = [
+  { name: "Home", type: "scroll", id: "home", path: "/" },
+  { name: "Categories", type: "scroll", id: "categories", path: "/#categories" },
+  { name: "All Products", type: "link", id: "products", path: "/products" },
+  { name: "New Arrivals", type: "scroll", id: "new arrivals", path: "/#new arrivals" },
+  { name: "Top Picks", type: "scroll", id: "top picks", path: "/#top picks" },
+  { name: "About", type: "scroll", id: "about", path: "/#about" },
+  { name: "Contact", type: "scroll", id: "contact", path: "/#contact" }
+];
+
+
 export default function Navbar() {
   const [click, setClick] = useState(false);
   const [visible, setVisible] = useState(true);
@@ -26,15 +39,7 @@ export default function Navbar() {
   const isAuthenticated = status === "authenticated";
   
   // Main navigation categories
-  const navLinks = [
-    { name: "Home", type: isHomePage ? "scroll" : "link", id: "home", path: "/" },
-    { name: "Categories", type: isHomePage ? "scroll" : "link", id: "categories", path: "/#categories" },
-    { name: "All Products", type: "link", id: "products", path: "/products" },
-    { name: "New Arrivals", type: isHomePage ? "scroll" : "link", id: "new arrivals", path: "/#new arrivals" },
-    { name: "Top Picks", type: isHomePage ? "scroll" : "link", id: "top picks", path: "/#top picks" },
-    { name: "About", type: isHomePage ? "scroll" : "link", id: "about", path: "/#about" },
-    { name: "Contact", type: isHomePage ? "scroll" : "link", id: "contact", path: "/#contact" }
-  ];
+  const navLinks = NAV_LINKS;
   
   // Handle logout
   const handleLogout = async () => {
@@ -111,7 +116,7 @@ export default function Navbar() {
     });
 
     return () => observer.disconnect();
-  }, [isHomePage]);
+  }, [isHomePage,navLinks]);
 
   const handleLinkClick = useCallback((linkName) => {
     setActiveLink(linkName);

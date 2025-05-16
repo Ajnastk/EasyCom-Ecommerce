@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useCallback } from "react";
 import { ShoppingBag, Star, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 
@@ -103,12 +103,10 @@ const ShowFiltredProducts = ({ productType }) => {
   const [scrollPosition, setScrollPosition] = useState(0);
   const [maxScroll, setMaxScroll] = useState(0);
 
-  useEffect(() => {
-    fetchTopProducts();
-  }, []);
+ 
 
   // Fetch top products from API
-  const fetchTopProducts = async () => {
+  const fetchTopProducts = useCallback(async () => {
     try {
       const res = await fetch(`/api/products?${productType}=true&limit=10`);
       const data = await res.json();
@@ -120,7 +118,11 @@ const ShowFiltredProducts = ({ productType }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [productType]);
+
+   useEffect(() => {
+    fetchTopProducts();
+  }, [fetchTopProducts]);
 
   useEffect(() => {
     const checkScrollable = () => {
