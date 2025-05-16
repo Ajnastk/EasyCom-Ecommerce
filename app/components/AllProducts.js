@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect,useCallback } from "react";
 import Image from "next/image";
 import { ShoppingBag, Star, Search, Filter, ChevronDown } from "lucide-react";
 
@@ -161,47 +161,47 @@ const AllProducts = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   // Modified to properly handle server-side filtering
-  const fetchProducts = async () => {
-    setLoading(true);
-    try {
-      // Construct URL with all filter parameters
-      let url = `/api/products?page=${currentPage}&limit=4&search=${searchTerm}`;
+  const fetchProducts = useCallback(async () => {
+  setLoading(true);
+  try {
+    let url = `/api/products?page=${currentPage}&limit=4&search=${searchTerm}`;
 
-      // We'll move filtering to the server side
-      if (selectedCategories.length > 0) {
-        url += `&categories=${selectedCategories.join(",")}`;
-        // console.log(url);
-      }
-
-      if (selectedColors.length > 0) {
-        url += `&colors=${selectedColors.join(",")}`;
-      }
-
-      url += `&minPrice=${priceRange.min}&maxPrice=${priceRange.max}`;
-
-      if (sortBy) {
-        url += `&sortBy=${sortBy}`;
-      }
-
-      // console.log("Fetching products from:", url);
-
-      const res = await fetch(url);
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to fetch products");
-      }
-
-      setProducts(data.products);
-      setTotalPages(data.totalPages);
-      // console.log(`Loaded ${data.products.length} products. Total pages: ${data.totalPages}, Total products: ${data.totalProducts}`);
-    } catch (error) {
-      console.error("Error fetching products:", error);
-    } finally {
-      setLoading(false);
+    if (selectedCategories.length > 0) {
+      url += `&categories=${selectedCategories.join(",")}`;
     }
-  };
 
+    if (selectedColors.length > 0) {
+      url += `&colors=${selectedColors.join(",")}`;
+    }
+
+    url += `&minPrice=${priceRange.min}&maxPrice=${priceRange.max}`;
+
+    if (sortBy) {
+      url += `&sortBy=${sortBy}`;
+    }
+
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || "Failed to fetch products");
+    }
+
+    setProducts(data.products);
+    setTotalPages(data.totalPages);
+  } catch (error) {
+    console.error("Error fetching products:", error);
+  } finally {
+    setLoading(false);
+  }
+}, [
+  currentPage,
+  searchTerm,
+  selectedCategories,
+  selectedColors,
+  priceRange,
+  sortBy,
+]);
   useEffect(() => {
     const fetchCategories = async () => {
       setCategoryLoading(true);
@@ -229,14 +229,7 @@ const AllProducts = () => {
 
   useEffect(() => {
     fetchProducts();
-  }, [
-    currentPage,
-    searchTerm,
-    selectedCategories,
-    selectedColors,
-    priceRange,
-    sortBy,
-  ]);
+  }, [fetchProducts]);
 
   // Define category options
   // const categoryOptions = [

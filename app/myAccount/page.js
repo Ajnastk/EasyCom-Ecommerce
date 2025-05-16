@@ -10,22 +10,23 @@ import {
   Camera,
   MapPin,
   Calendar,
-  Phone
+  Phone,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import Image from "next/image";
 
 export default function AccountPage() {
-  const {data : session,status} =useSession();
+  const { data: session, status } = useSession();
   const [activeTab, setActiveTab] = useState("profile");
   const router = useRouter();
 
-  if(status === "loading"){
-    return <div>Loading ....</div>
+  if (status === "loading") {
+    return <div>Loading ....</div>;
   }
 
-  if(status === 'authenticated'){
+  if (status === "authenticated") {
     router.push("/");
     return null;
   }
@@ -34,7 +35,7 @@ export default function AccountPage() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     // Get values from form
     const fullName = document.getElementById("fullName").value;
     const email = document.getElementById("email").value;
@@ -45,7 +46,7 @@ export default function AccountPage() {
     const state = document.getElementById("state").value;
     const zip = document.getElementById("zip").value;
     const country = document.getElementById("country").value;
-    
+
     // Create updated user object
     const updatedUser = {
       name: fullName,
@@ -57,22 +58,22 @@ export default function AccountPage() {
         city: city,
         state: state,
         zip: zip,
-        country: country
+        country: country,
       },
     };
 
-    try{
+    try {
       //Directly update session locally
-       update({
-        user:{
+      update({
+        user: {
           ...updatedUser,
         },
       });
 
       alert("Profile updated successfully!");
-    }catch(error){
-      console.error("Error updating profile:",error);
-      alert("Failed to update profile")
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      alert("Failed to update profile");
     }
   };
 
@@ -106,7 +107,9 @@ export default function AccountPage() {
               <div className="relative mb-4 md:mb-0 md:mr-6">
                 <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden border-4 border-white shadow">
                   {user.avatar ? (
-                    <img
+                    <Image
+                      priority
+                      fill
                       src={user.avatar}
                       alt={user.name}
                       className="w-full h-full object-cover"
@@ -490,8 +493,7 @@ export default function AccountPage() {
                       <p className="text-gray-500 mb-4">
                         You haven&apos;t placed any orders yet.
                       </p>
-                      <Link 
-
+                      <Link
                         href="/products"
                         className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800"
                       >
