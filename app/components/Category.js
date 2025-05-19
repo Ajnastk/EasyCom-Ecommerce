@@ -43,19 +43,16 @@ const ProductCategories = () => {
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState([]);
 
-
   useEffect(() => {
     fetchCategories();
   }, []);
 
-  
   const fetchCategories = async () => {
     try {
-      const res = await fetch(`/api/categories`);
+      const res = await fetch(`/api/categories?limit=full`);
       const data = await res.json();
 
-        setCategories(data);
-      
+      setCategories(data.categories);
     } catch (error) {
       console.error("Error fetching categories:", error);
     } finally {

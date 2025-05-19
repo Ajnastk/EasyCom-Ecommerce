@@ -27,7 +27,7 @@ export default function ProductsAdmin() {
     setLoading(true);
     try {
       const res = await fetch(
-        `/api/products?page=${currentPage}&search=${searchTerm}`
+        `/api/products?page=${currentPage}&search=${searchTerm}&limit=5`
       );
       const data = await res.json();
 
@@ -140,9 +140,9 @@ export default function ProductsAdmin() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Stock
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Category
-                  </th>
+                  </th> */}
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Brand
                   </th>
@@ -187,8 +187,8 @@ export default function ProductsAdmin() {
                           <Image
                             src={product.image}
                             alt={product.name || "product image"}
-                            width={50}
-                            height={50}
+                            width={120}
+                            height={100}
                             className="rounded object-cover"
                             loader={({ src, width, quality }) => {
                               return `${src}?w=${width}&q=${quality || 75}`;
@@ -211,11 +211,11 @@ export default function ProductsAdmin() {
                           {product.stock}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      {/* <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
                           {product.category?.name || "Uncategorized"}
                         </div>
-                      </td>
+                      </td> */}
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
                           {product.brand}

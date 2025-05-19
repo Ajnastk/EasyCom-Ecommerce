@@ -5,6 +5,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import dbConnect from "@/lib/mongodb";
 import User from "@/lib/models/User";
 import bcrypt from "bcryptjs";
+import { CreateJwt } from "@/lib/Jwt";
 
 const handler = NextAuth({
   providers: [
@@ -12,7 +13,7 @@ const handler = NextAuth({
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         try {
@@ -23,12 +24,15 @@ const handler = NextAuth({
             throw new Error("User not found");
           }
 
-          const isMatch = await bcrypt.compare(credentials.password, user.password);
-          
+          const isMatch = await bcrypt.compare(
+            credentials.password,
+            user.password
+          );
+
           if (!isMatch) {
             throw new Error("Invalid password");
           }
-          
+
           // Return safe user object - this becomes the JWT payload
           return {
             id: user._id.toString(),
@@ -40,7 +44,7 @@ const handler = NextAuth({
         } catch (error) {
           throw new Error(error.message || "Authentication failed");
         }
-      }
+      },
     }),
   ],
   callbacks: {
@@ -50,6 +54,7 @@ const handler = NextAuth({
         token.id = user.id;
         token.role = user.role;
         token.avatar = user.avatar;
+        // console.log("✅ JWT Created via NextAuth:", token);
       }
       return token;
     },
@@ -61,15 +66,15 @@ const handler = NextAuth({
         session.user.avatar = token.avatar;
       }
       return session;
-    }
+    },
   },
   pages: {
-    signIn: '/', // You can change this to your custom login page
-    error: '/', // Custom error page (or just redirect to home with error)
+    signIn: "/", // You can change this to your custom login page
+    error: "/", // Custom error page (or just redirect to home with error)
   },
   session: {
     strategy: "jwt",
-    maxAge: 7 * 24 * 60 * 60 // 7 days
+    maxAge: 10 * 60, // 10 minutes
   },
   secret: process.env.NEXTAUTH_SECRET,
   debug: process.env.NODE_ENV === "development",

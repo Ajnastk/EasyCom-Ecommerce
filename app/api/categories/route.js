@@ -100,11 +100,42 @@ export async function POST(request) {
   }
 }
 
-export async function GET() {
+
+export async function GET(request) {
   try {
     await dbConnect();
-    const categories = await categoryModel.find({});
-    return NextResponse.json(categories);
+
+    const { searchParams } = new URL(request.url);
+
+    // Get pagination and search parameters
+    const page = parseInt(searchParams.get("page")) || 1;
+    const limitParam = searchParams.get("limit");
+    const search = searchParams.get("search") || "";
+
+    const isFull = limitParam === "full";
+    const limit = isFull ? 0 : parseInt(limitParam) || 5;
+    const skip = isFull ? 0 : (page - 1) * limit;
+
+    // Optional search filter
+    const query = {};
+    if (search) {
+      query.name = { $regex: search, $options: "i" };
+    }
+
+    // Fetch categories
+    const [categories, total] = await Promise.all([
+      categoryModel.find(query).skip(skip).limit(limit),
+      categoryModel.countDocuments(query),
+    ]);
+
+    const totalPages = isFull ? 1 : Math.max(1, Math.ceil(total / limit));
+
+    return NextResponse.json({
+      categories,
+      totalPages,
+      currentPage: isFull ? 1 : page,
+      totalCategories: total,
+    });
   } catch (error) {
     console.error("Error fetching categories:", error);
     return NextResponse.json(

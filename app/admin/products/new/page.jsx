@@ -20,13 +20,13 @@ export default function AddProduct() {
     stock: 0,
     color: "",
     category: "",
-    isNew: false,
-    isTop: false,
+    NewArrival: false,
+    TopProduct: false,
   });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name === "isNew" || name === "isTop") {
+    if (name === "NewArrival" || name === "TopProduct") {
       setFormData({
         ...formData,
         [name]: value === "true",
@@ -88,8 +88,8 @@ export default function AddProduct() {
       form.append("stock", formData.stock);
       form.append("color", formData.color);
       form.append("category", formData.category);
-      form.append("isNew", formData.isNew);
-      form.append("isTop",formData.isTop);
+      form.append("NewArrival", formData.NewArrival);
+      form.append("TopProduct",formData.TopProduct);
       if (imageFile) form.append("image", imageFile);
 
       const response = await fetch("/api/products", {
@@ -290,9 +290,9 @@ export default function AddProduct() {
                     <label className="flex items-center gap-1 text-sm text-gray-700">
                       <input
                         type="radio"
-                        name="isNew"
+                        name="NewArrival"
                         value="true"
-                        checked={formData.isNew === true}
+                        checked={formData.NewArrival === true}
                         onChange={handleChange}
                         required
                       />
@@ -301,9 +301,9 @@ export default function AddProduct() {
                     <label className="flex items-center gap-1 text-sm text-gray-700">
                       <input
                         type="radio"
-                        name="isNew"
+                        name="NewArrival"
                         value="false"
-                        checked={formData.isNew === false}
+                        checked={formData.NewArrival === false}
                         onChange={handleChange}
                       />
                       No
@@ -320,9 +320,9 @@ export default function AddProduct() {
                     <label className="flex items-center gap-1 text-sm text-gray-700">
                       <input
                         type="radio"
-                        name="isTop"
+                        name="TopProduct"
                         value="true"
-                        checked={formData.isTop === true}
+                        checked={formData.TopProduct === true}
                         onChange={handleChange}
                         required
                       />
@@ -331,9 +331,9 @@ export default function AddProduct() {
                     <label className="flex items-center gap-1 text-sm text-gray-700">
                       <input
                         type="radio"
-                        name="isTop"
+                        name="TopProduct"
                         value="false"
-                        checked={formData.isTop === false}
+                        checked={formData.TopProduct === false}
                         onChange={handleChange}
                       />
                       No
