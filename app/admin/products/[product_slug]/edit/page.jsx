@@ -22,8 +22,8 @@ export default function EditProduct({ params: initialParams }) {
     stock: 0,
     color: "",
     category: "",
-    isNew: false,
-    isTop: false,
+    NewArrival: false,
+    TopProduct: false,
   });
 
   const productSlug = initialParams.product_slug;
@@ -48,9 +48,10 @@ export default function EditProduct({ params: initialParams }) {
           stock: productData.stock || 0,
           color: productData.color || "",
           category: productData.category || "",
-          isNew: productData.isNew || false,
-          isTop: productData.isTop || false,
+          NewArrival: productData.NewArrival || false,
+          TopProduct: productData.iTopProductsTop || false,
         });
+        console.log("category", formData.category);
 
         if (productData.image) {
           setOriginalImage(productData.image);
@@ -58,9 +59,9 @@ export default function EditProduct({ params: initialParams }) {
         }
 
         // Fetch categories
-        const categoriesRes = await fetch(`/api/categories`);
+        const categoriesRes = await fetch(`/api/categories?limit=full`);
         const categoriesData = await categoriesRes.json();
-        setCategories(categoriesData);
+        setCategories(categoriesData.categories);
       } catch (error) {
         console.error("Error fetching data:", error);
         setError(error.message);
@@ -74,7 +75,7 @@ export default function EditProduct({ params: initialParams }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name === "isNew" || name === "isTop") {
+    if (name === "NewArrival" || name === "TopProduct") {
       setFormData({
         ...formData,
         [name]: value === "true",
@@ -120,8 +121,8 @@ export default function EditProduct({ params: initialParams }) {
       form.append("stock", formData.stock);
       form.append("color", formData.color);
       form.append("category", formData.category);
-      form.append("isNew", formData.isNew);
-      form.append("isTop", formData.isTop);
+      form.append("NewArrival", formData.NewArrival);
+      form.append("TopProduct", formData.TopProduct);
       form.append("status", "active");
 
       if (imageFile) {
@@ -362,9 +363,9 @@ export default function EditProduct({ params: initialParams }) {
                     <label className="flex items-center gap-1 text-sm text-gray-700">
                       <input
                         type="radio"
-                        name="isNew"
+                        name="NewArrival"
                         value="true"
-                        checked={formData.isNew === true}
+                        checked={formData.NewArrival === true}
                         onChange={handleChange}
                         required
                       />
@@ -373,9 +374,9 @@ export default function EditProduct({ params: initialParams }) {
                     <label className="flex items-center gap-1 text-sm text-gray-700">
                       <input
                         type="radio"
-                        name="isNew"
+                        name="NewArrival"
                         value="false"
-                        checked={formData.isNew === false}
+                        checked={formData.NewArrival === false}
                         onChange={handleChange}
                       />
                       No
@@ -392,9 +393,9 @@ export default function EditProduct({ params: initialParams }) {
                     <label className="flex items-center gap-1 text-sm text-gray-700">
                       <input
                         type="radio"
-                        name="isTop"
+                        name="TopProduct"
                         value="true"
-                        checked={formData.isTop === true}
+                        checked={formData.TopProduct === true}
                         onChange={handleChange}
                         required
                       />
@@ -403,9 +404,9 @@ export default function EditProduct({ params: initialParams }) {
                     <label className="flex items-center gap-1 text-sm text-gray-700">
                       <input
                         type="radio"
-                        name="isTop"
+                        name="TopProduct"
                         value="false"
-                        checked={formData.isTop === false}
+                        checked={formData.TopProduct === false}
                         onChange={handleChange}
                       />
                       No

@@ -22,7 +22,7 @@ const ProductCard = ({ product }) => {
             {product.discount}% OFF
           </span>
         )}
-        {product.isNew && (
+        {product.NewArrival && (
           <span className="absolute top-2 right-2 bg-[#1a2649] text-white text-[10px] sm:text-xs font-semibold px-2 py-1 rounded">
             NEW
           </span>
@@ -167,7 +167,7 @@ const ShowFiltredProducts = ({ productType }) => {
       <div className="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header - responsive text sizes */}
         <div className="text-center mb-8 sm:mb-12">
-          {productType === "isTop" ? (
+          {productType === "TopProduct" ? (
             <h2 className="text-center">
               <span className="text-xl sm:text-2xl md:text-3xl text-gray-800">
                 Top{" "}
@@ -176,7 +176,7 @@ const ShowFiltredProducts = ({ productType }) => {
                 Picks
               </span>
             </h2>
-          ) : productType === "isNew" ? (
+          ) : productType === "NewArrival" ? (
             <h2 className="text-center">
               <span className="text-xl sm:text-2xl md:text-3xl text-gray-800">
                 New

@@ -27,15 +27,15 @@ export default function CategoriesAdmin() {
   const fetchCategories = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/categories`);
+      const res = await fetch(`/api/categories?page=${currentPage}&search=${searchTerm}`);
       const data = await res.json();
 
-      const filtered = data.filter((category) =>
+      const filtered = data.categories.filter((category) =>
         category.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
 
       setCategories(filtered);
-      setTotalPages(2); // Optional: calculate total pages based on result length
+      setTotalPages(data.totalPages); // Optional: calculate total pages based on result length
       setLoading(false);
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -188,7 +188,7 @@ export default function CategoriesAdmin() {
                           {category.name}
                         </div>
                         <div className="text-sm text-gray-500">
-                          ID: {category.id || i}
+                          ID: {i+1}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

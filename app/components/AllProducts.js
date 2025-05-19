@@ -22,7 +22,7 @@ const ProductCard = ({ product }) => {
             {product.discount}% OFF
           </span>
         )}
-        {product.isNew && (
+        {product.NewArrival && (
           <span className="absolute top-2 right-2 bg-[#1a2649] text-white text-[10px] sm:text-xs font-semibold px-2 py-1 rounded">
             NEW
           </span>

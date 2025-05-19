@@ -25,8 +25,8 @@ export async function POST(request) {
     const category = formData.get("category") || "";
     const stock = parseInt(formData.get("stock")) || 0;
     const color = formData.get("color");
-    const isNew = formData.get("isNew") || false;
-    const isTop = formData.get("isTop") || false;
+    const NewArrival = formData.get("NewArrival") || false;
+    const TopProduct = formData.get("TopProduct") || false;
 
     // Basic validation
     if (!name) {
@@ -95,8 +95,8 @@ export async function POST(request) {
       category,
       stock,
       color,
-      isNew,
-      isTop,
+      NewArrival,
+      TopProduct,
     };
 
     // Save to database
@@ -144,8 +144,8 @@ export async function GET(request) {
     const minPrice = parseFloat(searchParams.get("minPrice")) || 0;
     const maxPrice = parseFloat(searchParams.get("maxPrice")) || 9999;
     const sortBy = searchParams.get("sortBy") || "featured";
-    const isNew = searchParams.get("isNew");
-    const isTop = searchParams.get("isTop");
+    const NewArrival = searchParams.get("NewArrival");
+    const TopProduct = searchParams.get("TopProduct");
 
     // Build query object
     const query = {};
@@ -171,11 +171,11 @@ export async function GET(request) {
     query.price = { $gte: minPrice, $lte: maxPrice };
 
     // Boolean filters
-    if (isNew === "true") {
-      query.isNew = true;
+    if (NewArrival === "true") {
+      query.NewArrival = true;
     }
-    if (isTop === "true") {
-      query.isTop = true;
+    if (TopProduct === "true") {
+      query.TopProduct = true;
     }
 
     // Determine sort options
