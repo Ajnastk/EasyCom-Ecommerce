@@ -206,7 +206,7 @@ export default function CategoriesAdmin() {
                           <Image
                             src={category.image}
                             alt={category.name || "Category Image"}
-                            width={50}
+                            width={150}
                             height={50}
                             className="rounded object-cover"
                             // Add these for better Cloudinary integration:

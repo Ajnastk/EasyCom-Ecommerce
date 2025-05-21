@@ -21,7 +21,7 @@ export function AuthModal({ isOpen, onClose }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [role, setRole] = useState("user"); // Default role is 'user'
+  // const [role, setRole] = useState("user"); // Default role is 'user'
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -41,7 +41,6 @@ export function AuthModal({ isOpen, onClose }) {
       setEmail("");
       setPassword("");
       setName("");
-      setRole("user");
       setErrors({});
       setFormError("");
       setLoading(false);
@@ -93,45 +92,26 @@ export function AuthModal({ isOpen, onClose }) {
 
     setLoading(true);
     if (isLogin) {
-      try {
-        const res = await signIn("credentials", {
-          redirect: false,
-          email,
-          password,
-        });
+      const res = await signIn("credentials", {
+        redirect: false,
+        email,
+        password,
+        // Simplified redirect
+      });
 
-        if (res.error) {
-          throw new Error(res.error);
-        }
-
-        // Fetch session to determine role and redirect accordingly
-        const sessionRes = await fetch("/api/auth/session");
-        const session = await sessionRes.json();
-
-        // Close modal on successful login
-        onClose();
-
-        // Redirect based on role
-        if (session?.user?.role === "admin") {
-          router.push("/admin");
-        } else {
-          router.push("/");
-        }
-      } catch (error) {
-        setFormError(error.message || "Failed to sign in");
-        console.error("Auth error:", error.message);
-      } finally {
-        setLoading(false);
+      if (res?.error) {
+        throw new Error(res.error);
       }
+
+      onClose();
+      router.push(res.url || "/"); // Use NextAuth's built-in redirect
     } else {
       // Handle signup
       try {
         const res = await fetch("/api/auth/register", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ name, email, password, role }),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, password, role: "user" }), // Force user role
         });
 
         const data = await res.json();
@@ -310,7 +290,7 @@ export function AuthModal({ isOpen, onClose }) {
           </div>
 
           {/* Role selection (signup only) */}
-          {!isLogin && (
+          {/* {!isLogin && (
             <div className="mb-6">
               <label
                 htmlFor="role"
@@ -376,7 +356,7 @@ export function AuthModal({ isOpen, onClose }) {
                 </div>
               </div>
             </div>
-          )}
+          )} */}
 
           {/* Submit button */}
           <button

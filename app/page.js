@@ -10,8 +10,8 @@ export default function Home() {
     <div className="bg-white">
       <SlideHero />
       <ProductCategories />
-      <ShowFiltredProducts productType={"isNew"} />
-      <ShowFiltredProducts productType={"isTop"} />
+      <ShowFiltredProducts productType={"NewArrival"} />
+      <ShowFiltredProducts productType={"TopProduct"} />
       <About />
       <Testimonial />
       {/* <Footer/> */}

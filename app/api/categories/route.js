@@ -2,8 +2,24 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import categoryModel from "@/lib/models/Category";
 import { v2 as cloudinary } from "cloudinary";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../auth/[...nextauth]/route";
+
+ cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    });
 
 export async function POST(request) {
+
+  const session = await getServerSession(authOptions);
+  // console.log("Full session object:", session); // Debug log
+  
+  if (!session?.user || session.user.role !== "admin") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     // Debug: Check if environment variables are loaded
     // console.log("Cloudinary Config Check:", {
@@ -13,12 +29,7 @@ export async function POST(request) {
     // });
 
     // Configure Cloudinary
-    cloudinary.config({
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-      api_key: process.env.CLOUDINARY_API_KEY,
-      api_secret: process.env.CLOUDINARY_API_SECRET,
-    });
-
+   
     await dbConnect();
 
     // Use FormData API to handle multipart/form-data

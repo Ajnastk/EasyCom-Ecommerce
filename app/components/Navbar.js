@@ -11,11 +11,12 @@ import {
   LogIn,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { AuthModal, UserMenu } from "./AuthModal"; // Import the auth components
 import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
-
+import LoginLayout from "./loginLayout";
+import { useSearchParams } from "next/navigation";
 // Move this to the top, outside the component
 
 export default function Navbar() {
@@ -35,16 +36,50 @@ export default function Navbar() {
   const user = session?.user;
   const isLoading = status === "loading";
   const isAuthenticated = status === "authenticated";
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // const {message} = router.query;
 
   // Main navigation categories
-    const NAV_LINKS = [
-    { name: "Home", type: isHomePage ? "scroll" : "link", id: "home", path: "/" },
-    { name: "Categories", type: isHomePage ? "scroll" : "link", id: "categories", path: "/#categories" },
+  const NAV_LINKS = [
+    {
+      name: "Home",
+      type: isHomePage ? "scroll" : "link",
+      id: "home",
+      path: "/",
+    },
+    {
+      name: "Categories",
+      type: isHomePage ? "scroll" : "link",
+      id: "categories",
+      path: "/#categories",
+    },
     { name: "All Products", type: "link", id: "products", path: "/products" },
-    { name: "New Arrivals", type: isHomePage ? "scroll" : "link", id: "new arrivals", path: "/#new arrivals" },
-    { name: "Top Picks", type: isHomePage ? "scroll" : "link", id: "top picks", path: "/#top picks" },
-    { name: "About", type: isHomePage ? "scroll" : "link", id: "about", path: "/#about" },
-    { name: "Contact", type: isHomePage ? "scroll" : "link", id: "contact", path: "/#contact" }
+    {
+      name: "New Arrivals",
+      type: isHomePage ? "scroll" : "link",
+      id: "new arrivals",
+      path: "/#new arrivals",
+    },
+    {
+      name: "Top Picks",
+      type: isHomePage ? "scroll" : "link",
+      id: "top picks",
+      path: "/#top picks",
+    },
+    {
+      name: "About",
+      type: isHomePage ? "scroll" : "link",
+      id: "about",
+      path: "/#about",
+    },
+    {
+      name: "Contact",
+      type: isHomePage ? "scroll" : "link",
+      id: "contact",
+      path: "/#contact",
+    },
   ];
   const navLinks = NAV_LINKS;
 
@@ -57,6 +92,14 @@ export default function Navbar() {
   const toggleSearch = () => setSearchOpen(!searchOpen);
   const openAuthModal = () => setAuthModalOpen(true);
   const closeAuthModal = () => setAuthModalOpen(false);
+
+  // Check any messages from route
+  useEffect(() => {
+    const message = searchParams.get("message");
+    if (message === "openLogin") {
+      openAuthModal();
+    }
+  }, [searchParams]);
 
   // Check if we're on a mobile device
   useEffect(() => {

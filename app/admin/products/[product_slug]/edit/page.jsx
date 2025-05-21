@@ -61,6 +61,7 @@ export default function EditProduct({ params: initialParams }) {
         // Fetch categories
         const categoriesRes = await fetch(`/api/categories?limit=full`);
         const categoriesData = await categoriesRes.json();
+        
         setCategories(categoriesData.categories);
       } catch (error) {
         console.error("Error fetching data:", error);
