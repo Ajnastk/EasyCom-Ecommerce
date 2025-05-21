@@ -42,13 +42,12 @@ export default function AddProduct() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await fetch(`/api/categories`);
+        const res = await fetch(`/api/categories?limit=full`);
         const data = await res.json();
 
-        const filtered = data.filter((category) => category.name.toLowerCase());
-        // console.log(filtered);
+        // console.log(data.categories);
 
-        setCategories(filtered);
+        setCategories(data.categories);
         // setTotalPages(2); // Optional: calculate total pages based on result length
         setLoading(false);
       } catch (error) {
@@ -89,7 +88,7 @@ export default function AddProduct() {
       form.append("color", formData.color);
       form.append("category", formData.category);
       form.append("NewArrival", formData.NewArrival);
-      form.append("TopProduct",formData.TopProduct);
+      form.append("TopProduct", formData.TopProduct);
       if (imageFile) form.append("image", imageFile);
 
       const response = await fetch("/api/products", {

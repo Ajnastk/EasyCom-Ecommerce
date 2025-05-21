@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import productModel from "@/lib/models/Product";
 import { v2 as cloudinary } from "cloudinary";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../auth/[...nextauth]/route";
 
 // Cloudinary config
 cloudinary.config({
@@ -12,6 +14,12 @@ cloudinary.config({
 });
 
 export async function POST(request) {
+  const session = await getServerSession(authOptions);
+  // console.log("Full session object:", session); // Debug log
+
+  if (!session?.user || session.user.role !== "admin") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     await dbConnect();
 
@@ -161,7 +169,7 @@ export async function GET(request) {
     }
 
     // console.log(query.category);
-    
+
     // Colors filter
     if (colors.length > 0) {
       query.color = { $in: colors };
@@ -206,11 +214,7 @@ export async function GET(request) {
 
     // Execute query with proper pagination
     const [products, total] = await Promise.all([
-      productModel
-        .find(query)
-        .sort(sortOptions)
-        .skip(skip)
-        .limit(limit),
+      productModel.find(query).sort(sortOptions).skip(skip).limit(limit),
       productModel.countDocuments(query),
     ]);
 

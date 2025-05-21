@@ -2,6 +2,9 @@ import dbConnect from "@/lib/mongodb";
 import { NextResponse } from "next/server";
 import productModel from "@/lib/models/Product";
 import { v2 as cloudinary } from "cloudinary";
+import { getServerSession } from "next-auth";
+import { handler } from "../../auth/[...nextauth]/route";
+import { authOptions } from "../../auth/[...nextauth]/route";
 
 // Configure Cloudinary
 cloudinary.config({
@@ -34,9 +37,15 @@ export async function GET(request, { params }) {
 
 // Update product
 export async function PUT(request, { params }) {
-  try {
-    console.log("product update process started");
+  const session = await getServerSession(authOptions);
+  // console.log("Full session object:", session); // Debug log
 
+  if (!session?.user || session.user.role !== "admin") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    console.log("Product update process started");
     await dbConnect();
 
     const formData = await request.formData();
@@ -53,7 +62,6 @@ export async function PUT(request, { params }) {
     const newImage = formData.get("images");
     const imagesToRemove = formData.get("imagesToRemove") === "true";
 
-    // Find existing product
     const productSlug = params.product_slug;
     const existingProduct = await productModel.findOne({
       $or: [{ _id: productSlug }, { slug: productSlug }],
@@ -66,7 +74,6 @@ export async function PUT(request, { params }) {
     let imageUrl = existingProduct.image;
     const newImageUrls = [];
 
-    // Handle image removal from Cloudinary
     if (imagesToRemove && existingProduct.image) {
       try {
         const publicId = existingProduct.image.split("/").pop().split(".")[0];
@@ -78,21 +85,21 @@ export async function PUT(request, { params }) {
       }
     }
 
-    // Handle image uploads
     if (newImage) {
       try {
-        // Delete old image if exists (similar to category logic)
         if (existingProduct.image && !imagesToRemove) {
           try {
-            const publicId = existingProduct.image.split("/").pop().split(".")[0];
+            const publicId = existingProduct.image
+              .split("/")
+              .pop()
+              .split(".")[0];
             const fullPublicId = `ecommerce-products/${publicId}`;
             await cloudinary.uploader.destroy(fullPublicId);
           } catch (cloudinaryError) {
             console.error("Error deleting old image:", cloudinaryError);
           }
         }
-        
-        // Upload new image
+
         const arrayBuffer = await newImage.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
@@ -122,12 +129,9 @@ export async function PUT(request, { params }) {
       }
     }
 
-    // Prepare images array
     let updatedImages = existingProduct.images || [];
-    
-    // If imagesToRemove is true, empty the array and delete from Cloudinary
+
     if (imagesToRemove) {
-      // Delete all existing images from Cloudinary
       if (updatedImages && updatedImages.length > 0) {
         try {
           for (const img of updatedImages) {
@@ -141,13 +145,11 @@ export async function PUT(request, { params }) {
       }
       updatedImages = [];
     }
-    
-    // Add new image URLs if any
+
     if (newImageUrls.length > 0) {
       updatedImages = [...updatedImages, ...newImageUrls];
     }
 
-    // Update product
     const updatedProduct = await productModel
       .findByIdAndUpdate(
         existingProduct._id,
@@ -181,6 +183,12 @@ export async function PUT(request, { params }) {
 
 // Delete product
 export async function DELETE(request, { params }) {
+  const session = await getServerSession(authOptions);
+  // console.log("Full session object:", session); // Debug log
+
+  if (!session?.user || session.user.role !== "admin") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     // console.log("product delelte process started")
     await dbConnect();
