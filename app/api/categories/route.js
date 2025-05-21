@@ -2,8 +2,24 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import categoryModel from "@/lib/models/Category";
 import { v2 as cloudinary } from "cloudinary";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../auth/[...nextauth]/route";
+
+ cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    });
 
 export async function POST(request) {
+
+  const session = await getServerSession(authOptions);
+  // console.log("Full session object:", session); // Debug log
+  
+  if (!session?.user || session.user.role !== "admin") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     // Debug: Check if environment variables are loaded
     // console.log("Cloudinary Config Check:", {
@@ -13,12 +29,7 @@ export async function POST(request) {
     // });
 
     // Configure Cloudinary
-    cloudinary.config({
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-      api_key: process.env.CLOUDINARY_API_KEY,
-      api_secret: process.env.CLOUDINARY_API_SECRET,
-    });
-
+   
     await dbConnect();
 
     // Use FormData API to handle multipart/form-data
@@ -100,11 +111,42 @@ export async function POST(request) {
   }
 }
 
-export async function GET() {
+
+export async function GET(request) {
   try {
     await dbConnect();
-    const categories = await categoryModel.find({});
-    return NextResponse.json(categories);
+
+    const { searchParams } = new URL(request.url);
+
+    // Get pagination and search parameters
+    const page = parseInt(searchParams.get("page")) || 1;
+    const limitParam = searchParams.get("limit");
+    const search = searchParams.get("search") || "";
+
+    const isFull = limitParam === "full";
+    const limit = isFull ? 0 : parseInt(limitParam) || 5;
+    const skip = isFull ? 0 : (page - 1) * limit;
+
+    // Optional search filter
+    const query = {};
+    if (search) {
+      query.name = { $regex: search, $options: "i" };
+    }
+
+    // Fetch categories
+    const [categories, total] = await Promise.all([
+      categoryModel.find(query).skip(skip).limit(limit),
+      categoryModel.countDocuments(query),
+    ]);
+
+    const totalPages = isFull ? 1 : Math.max(1, Math.ceil(total / limit));
+
+    return NextResponse.json({
+      categories,
+      totalPages,
+      currentPage: isFull ? 1 : page,
+      totalCategories: total,
+    });
   } catch (error) {
     console.error("Error fetching categories:", error);
     return NextResponse.json(

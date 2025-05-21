@@ -31,12 +31,9 @@ export default function RootLayout({ children }) {
       <Providers>
       {!isAdminRoute && <Navbar />}
         {children}
-        <SpeedInsights/>
+     <SpeedInsights/> 
       {!isAdminRoute && <Footer />}
        </Providers>
-
-
-
       </body>
     </html>
   );

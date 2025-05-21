@@ -43,72 +43,18 @@ const ProductCategories = () => {
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState([]);
 
-  const mockCategories = [
-    {
-      name: "Electronics",
-      image: "/images/electronics.jpg",
-    },
-    {
-      name: "Fashion",
-      image: "/images/fashion.jpg",
-    },
-    {
-      name: "Home Decor",
-      image: "/images/home-decor.jpg",
-    },
-    {
-      name: "Books",
-      image: "/images/books.jpg",
-    },
-    {
-      name: "Toys",
-      image: "/images/toys.jpg",
-    },
-    {
-      name: "Sports",
-      image: "/images/sports.jpg",
-    },
-    {
-      name: "Groceries",
-      image: "/images/groceries.jpg",
-    },
-    {
-      name: "Health",
-      image: "/images/health.jpg",
-    },
-    {
-      name: "Automotive",
-      image: "/images/automotive.jpg",
-    },
-    {
-      name: "Music",
-      image: "/images/music.jpg",
-    },
-  ];
-
   useEffect(() => {
     fetchCategories();
   }, []);
 
-  
   const fetchCategories = async () => {
-    setLoading(true);
     try {
-      // Simulate network delay
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      const res = await fetch(`/api/categories`);
+      const res = await fetch(`/api/categories?limit=full`);
       const data = await res.json();
 
-      // Check if response has usable data
-      if (Array.isArray(data) && data.length > 0) {
-        setCategories(data);
-      } else {
-        setCategories(mockCategories); // fallback
-      }
+      setCategories(data.categories);
     } catch (error) {
       console.error("Error fetching categories:", error);
-      setCategories(mockCategories); // fallback
     } finally {
       setLoading(false);
     }

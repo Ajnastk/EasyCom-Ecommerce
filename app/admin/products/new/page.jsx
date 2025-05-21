@@ -20,26 +20,34 @@ export default function AddProduct() {
     stock: 0,
     color: "",
     category: "",
+    NewArrival: false,
+    TopProduct: false,
   });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+    if (name === "NewArrival" || name === "TopProduct") {
+      setFormData({
+        ...formData,
+        [name]: value === "true",
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value,
+      });
+    }
   };
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await fetch(`/api/categories`);
+        const res = await fetch(`/api/categories?limit=full`);
         const data = await res.json();
 
-        const filtered = data.filter((category) => category.name.toLowerCase());
-        // console.log(filtered);
+        // console.log(data.categories);
 
-        setCategories(filtered);
+        setCategories(data.categories);
         // setTotalPages(2); // Optional: calculate total pages based on result length
         setLoading(false);
       } catch (error) {
@@ -79,6 +87,8 @@ export default function AddProduct() {
       form.append("stock", formData.stock);
       form.append("color", formData.color);
       form.append("category", formData.category);
+      form.append("NewArrival", formData.NewArrival);
+      form.append("TopProduct", formData.TopProduct);
       if (imageFile) form.append("image", imageFile);
 
       const response = await fetch("/api/products", {
@@ -265,6 +275,69 @@ export default function AddProduct() {
                     onChange={handleChange}
                     className="bg-gray-50 text-gray-900 shadow-sm focus:ring-indigo-600 focus:border-indigo-600 block w-full sm:text-sm border border-gray-300 rounded-lg px-3 py-2"
                   />
+                </div>
+
+                <div className="sm:col-span-3"></div>
+
+                {/* New or Not  */}
+                <div className="sm:col-span-3">
+                  <label className="block text-sm font-semibold text-gray-800">
+                    New Product <span className="text-red-500">*</span>
+                  </label>
+
+                  <div className="flex items-center gap-4 mt-2">
+                    <label className="flex items-center gap-1 text-sm text-gray-700">
+                      <input
+                        type="radio"
+                        name="NewArrival"
+                        value="true"
+                        checked={formData.NewArrival === true}
+                        onChange={handleChange}
+                        required
+                      />
+                      Yes
+                    </label>
+                    <label className="flex items-center gap-1 text-sm text-gray-700">
+                      <input
+                        type="radio"
+                        name="NewArrival"
+                        value="false"
+                        checked={formData.NewArrival === false}
+                        onChange={handleChange}
+                      />
+                      No
+                    </label>
+                  </div>
+                </div>
+
+                <div className="sm:col-span-3">
+                  <label className="block text-sm font-semibold text-gray-800">
+                    is Top Product <span className="text-red-500">*</span>
+                  </label>
+
+                  <div className="flex items-center gap-4 mt-2">
+                    <label className="flex items-center gap-1 text-sm text-gray-700">
+                      <input
+                        type="radio"
+                        name="TopProduct"
+                        value="true"
+                        checked={formData.TopProduct === true}
+                        onChange={handleChange}
+                        required
+                      />
+                      Yes
+                    </label>
+                    <label className="flex items-center gap-1 text-sm text-gray-700">
+                      <input
+                        type="radio"
+                        name="TopProduct"
+                        value="false"
+                        checked={formData.TopProduct === false}
+                        onChange={handleChange}
+                      />
+                      No
+                    </label>
+                  </div>
                 </div>
 
                 {/* Description */}

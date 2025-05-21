@@ -22,6 +22,8 @@ export default function EditProduct({ params: initialParams }) {
     stock: 0,
     color: "",
     category: "",
+    NewArrival: false,
+    TopProduct: false,
   });
 
   const productSlug = initialParams.product_slug;
@@ -46,7 +48,10 @@ export default function EditProduct({ params: initialParams }) {
           stock: productData.stock || 0,
           color: productData.color || "",
           category: productData.category || "",
+          NewArrival: productData.NewArrival || false,
+          TopProduct: productData.iTopProductsTop || false,
         });
+        console.log("category", formData.category);
 
         if (productData.image) {
           setOriginalImage(productData.image);
@@ -54,9 +59,10 @@ export default function EditProduct({ params: initialParams }) {
         }
 
         // Fetch categories
-        const categoriesRes = await fetch(`/api/categories`);
+        const categoriesRes = await fetch(`/api/categories?limit=full`);
         const categoriesData = await categoriesRes.json();
-        setCategories(categoriesData);
+        
+        setCategories(categoriesData.categories);
       } catch (error) {
         console.error("Error fetching data:", error);
         setError(error.message);
@@ -70,10 +76,17 @@ export default function EditProduct({ params: initialParams }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+    if (name === "NewArrival" || name === "TopProduct") {
+      setFormData({
+        ...formData,
+        [name]: value === "true",
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value,
+      });
+    }
   };
 
   const handleImageUpload = (e) => {
@@ -97,7 +110,7 @@ export default function EditProduct({ params: initialParams }) {
     // console.log("handle submit process started");
     e.preventDefault();
     // setLoading(true);
-    setShowUpdatingPopup(true)
+    setShowUpdatingPopup(true);
     setError(null);
 
     try {
@@ -109,6 +122,8 @@ export default function EditProduct({ params: initialParams }) {
       form.append("stock", formData.stock);
       form.append("color", formData.color);
       form.append("category", formData.category);
+      form.append("NewArrival", formData.NewArrival);
+      form.append("TopProduct", formData.TopProduct);
       form.append("status", "active");
 
       if (imageFile) {
@@ -135,7 +150,7 @@ export default function EditProduct({ params: initialParams }) {
       console.error("Error updating product:", error);
       setError(error.message || "Failed to update product");
     } finally {
-      setShowUpdatingPopup(false)
+      setShowUpdatingPopup(false);
       // setLoading(false);
     }
   };
@@ -148,20 +163,20 @@ export default function EditProduct({ params: initialParams }) {
     formData.color &&
     formData.category;
 
-    if (loading) {
-      return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
-            <div className="flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mr-3"></div>
-              <p className="text-lg font-medium text-gray-900">
-                Loading Product Data...
-              </p>
-            </div>
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+          <div className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mr-3"></div>
+            <p className="text-lg font-medium text-gray-900">
+              Loading Product Data...
+            </p>
           </div>
         </div>
-      );
-    }
+      </div>
+    );
+  }
 
   if (error) {
     return (
@@ -177,21 +192,20 @@ export default function EditProduct({ params: initialParams }) {
     );
   }
   return (
-
     <div className="bg-gray-50 min-h-screen">
-    {/* Delete Popup */}
-    {showUpdatingPopup && (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
-          <div className="flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mr-3"></div>
-            <p className="text-lg font-medium text-gray-900">
-              Updating Product...
-            </p>
+      {/* Delete Popup */}
+      {showUpdatingPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mr-3"></div>
+              <p className="text-lg font-medium text-gray-900">
+                Updating Product...
+              </p>
+            </div>
           </div>
         </div>
-      </div>
-    )}
+      )}
       <div className="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center">
@@ -336,6 +350,69 @@ export default function EditProduct({ params: initialParams }) {
                     onChange={handleChange}
                     className="bg-gray-50 text-gray-900 shadow-sm focus:ring-indigo-600 focus:border-indigo-600 block w-full sm:text-sm border border-gray-300 rounded-lg px-3 py-2"
                   />
+                </div>
+
+                <div className="sm:col-span-3"></div>
+
+                {/* New or Not  */}
+                <div className="sm:col-span-3">
+                  <label className="block text-sm font-semibold text-gray-800">
+                    New Product <span className="text-red-500">*</span>
+                  </label>
+
+                  <div className="flex items-center gap-4 mt-2">
+                    <label className="flex items-center gap-1 text-sm text-gray-700">
+                      <input
+                        type="radio"
+                        name="NewArrival"
+                        value="true"
+                        checked={formData.NewArrival === true}
+                        onChange={handleChange}
+                        required
+                      />
+                      Yes
+                    </label>
+                    <label className="flex items-center gap-1 text-sm text-gray-700">
+                      <input
+                        type="radio"
+                        name="NewArrival"
+                        value="false"
+                        checked={formData.NewArrival === false}
+                        onChange={handleChange}
+                      />
+                      No
+                    </label>
+                  </div>
+                </div>
+
+                <div className="sm:col-span-3">
+                  <label className="block text-sm font-semibold text-gray-800">
+                    is Top Product <span className="text-red-500">*</span>
+                  </label>
+
+                  <div className="flex items-center gap-4 mt-2">
+                    <label className="flex items-center gap-1 text-sm text-gray-700">
+                      <input
+                        type="radio"
+                        name="TopProduct"
+                        value="true"
+                        checked={formData.TopProduct === true}
+                        onChange={handleChange}
+                        required
+                      />
+                      Yes
+                    </label>
+                    <label className="flex items-center gap-1 text-sm text-gray-700">
+                      <input
+                        type="radio"
+                        name="TopProduct"
+                        value="false"
+                        checked={formData.TopProduct === false}
+                        onChange={handleChange}
+                      />
+                      No
+                    </label>
+                  </div>
                 </div>
 
                 {/* Description */}
