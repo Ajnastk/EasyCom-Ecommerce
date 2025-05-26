@@ -24,16 +24,21 @@ const authOptions = {
             throw new Error("Email and password are required");
           }
 
-          const user = await User.findOne({ email: credentials.email }).select("+password");
+          const user = await User.findOne({ email: credentials.email }).select(
+            "+password"
+          );
 
           if (!user) {
-            throw new Error("Invalid credentials");
+            throw new Error("No account found with this email");
           }
 
-          const isMatch = await bcrypt.compare(credentials.password, user.password);
+          const isMatch = await bcrypt.compare(
+            credentials.password,
+            user.password
+          );
 
           if (!isMatch) {
-            throw new Error("Invalid credentials");
+            throw new Error("Incorrect password");
           }
 
           return {
@@ -45,7 +50,10 @@ const authOptions = {
           };
         } catch (error) {
           console.error("Authentication error:", error.message);
-          return null;
+          // Return the error to be passed to the frontend
+          throw new Error(error.message); // This will preserve your custom message
+          // Alternatively:
+          // return Promise.reject(new Error(error.message));
         }
       },
     }),
@@ -84,4 +92,4 @@ const authOptions = {
 
 const handler = NextAuth(authOptions);
 
-export { handler as GET, handler as POST,authOptions };
+export { handler as GET, handler as POST, authOptions };
