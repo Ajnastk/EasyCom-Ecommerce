@@ -42,6 +42,7 @@ const ProductCategories = () => {
   const timerRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState([]);
+  const [responseNotOkey,setResponseNotOkey] = useState(false)
 
   useEffect(() => {
     fetchCategories();
@@ -50,6 +51,9 @@ const ProductCategories = () => {
   const fetchCategories = async () => {
     try {
       const res = await fetch(`/api/categories?limit=full`);
+      if(!res){
+        setResponseNotOkey(true)
+      }
       const data = await res.json();
 
       setCategories(data.categories);
@@ -267,7 +271,7 @@ const ProductCategories = () => {
         </div>
 
         {/* Pagination dots */}
-        {!loading && categories.length > 0 && (
+        {!loading && categories.length > 0 ? (
           <div className="flex justify-center mt-4 md:mt-6 space-x-3 z-30">
             {Array.from({ length: maxScroll + 1 }).map((_, idx) => (
               <button
@@ -288,6 +292,10 @@ const ProductCategories = () => {
               </button>
             ))}
           </div>
+        ):responseNotOkey ? (
+          <div className="flex justify-center items-center text-black">Categories is not available</div>
+        ):(
+          <div></div>
         )}
 
         <div className="text-center lg:mt-24 md:mt-14 sm:mt-8 mt-8">
