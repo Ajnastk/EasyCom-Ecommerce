@@ -102,6 +102,7 @@ const ShowFiltredProducts = ({ productType }) => {
   const [isScrollable, setIsScrollable] = useState(false);
   const [scrollPosition, setScrollPosition] = useState(0);
   const [maxScroll, setMaxScroll] = useState(0);
+  const [responseNotOkey,setResponseNotOkey] = useState(false)
 
  
 
@@ -109,6 +110,9 @@ const ShowFiltredProducts = ({ productType }) => {
   const fetchTopProducts = useCallback(async () => {
     try {
       const res = await fetch(`/api/products?${productType}=true&limit=10`);
+      if(!res){
+        setResponseNotOkey(true)
+      }
       const data = await res.json();
 
       setProducts(data.products);
@@ -245,7 +249,9 @@ const ShowFiltredProducts = ({ productType }) => {
               <div className="w-full text-center py-8 text-red-500">
                 {error}
               </div>
-            ) : (
+            ) : responseNotOkey ? (
+              <div className="flex justify-center items-center">Products is not available</div>
+            ) :(
               // Show actual products when loaded
               products.map((product, idx) => (
                 <div
