@@ -17,6 +17,8 @@ import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
 import LoginLayout from "./loginLayout";
 import { useSearchParams } from "next/navigation";
+import { useSelector } from "react-redux";
+
 // Move this to the top, outside the component
 
 export default function Navbar() {
@@ -25,7 +27,7 @@ export default function Navbar() {
   const [prevScrollPos, setPrevScrollPos] = useState(0);
   const [activeLink, setActiveLink] = useState("home");
   const [searchOpen, setSearchOpen] = useState(false);
-  const [cartCount, setCartCount] = useState(3);
+  const [cartCount, setCartCount] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const pathname = usePathname();
   const isHomePage = pathname === "/" || pathname === "/#";
@@ -38,6 +40,9 @@ export default function Navbar() {
   const isAuthenticated = status === "authenticated";
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  const cartItmes = useSelector((store) => store.cart.items);
+console.log("Redux store itmes",cartItmes);
 
   // const {message} = router.query;
 
@@ -242,12 +247,12 @@ export default function Navbar() {
                 <Heart size={22} />
                 <span className="text-xs mt-1">Wishlist</span>
               </button>
-
+              
               <button className="flex flex-col items-center text-gray-700 hover:text-blue-600 relative">
                 <ShoppingCart size={22} />
-                {cartCount > 0 && (
+                {cartItmes.length > 0 && (
                   <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
-                    {cartCount}
+                    {cartItmes.length}
                   </span>
                 )}
                 <span className="text-xs mt-1">Cart</span>

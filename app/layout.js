@@ -1,11 +1,11 @@
-"use client"
+"use client";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import { Providers } from "./providers";
-import { usePathname } from 'next/navigation'; // <-- Important
-import { SpeedInsights } from "@vercel/speed-insights/next"
+import { usePathname } from "next/navigation"; // <-- Important
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,20 +20,19 @@ const geistMono = Geist_Mono({
 export default function RootLayout({ children }) {
   const pathname = usePathname();
 
-  const isAdminRoute = pathname.startsWith('/admin');
+  const isAdminRoute = pathname.startsWith("/admin");
 
   return (
     <html lang="en">
-
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-      <Providers>
-      {!isAdminRoute && <Navbar />}
-        {children}
-     <SpeedInsights/> 
-      {!isAdminRoute && <Footer />}
-       </Providers>
+        <Providers>
+          {!isAdminRoute && <Navbar />}
+          {children}
+          <SpeedInsights />
+          {!isAdminRoute && <Footer />}
+        </Providers>
       </body>
     </html>
   );
