@@ -11,7 +11,7 @@ import {
   UserCog,
 } from "lucide-react";
 import Link from "next/link";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { signIn, signOut, useSession, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
@@ -92,19 +92,36 @@ export function AuthModal({ isOpen, onClose }) {
 
     setLoading(true);
     if (isLogin) {
-      const res = await signIn("credentials", {
-        redirect: false,
-        email,
-        password,
-        // Simplified redirect
-      });
+      try {
+        const result = await signIn("credentials", {
+          redirect: false,
+          email,
+          password,
+        });
 
-      if (res?.error) {
-        throw new Error(res.error);
+        if (result?.error) {
+          // This will now contain your custom error message
+          setFormError(result.error);
+        } else {
+          // Success - redirect
+          // router.push("/");
+          if (result.ok) {
+            const session = await getSession(); // Add this to access role
+            // console.log(session);
+
+            if (session?.user?.role === "admin") {
+              router.push("/admin");
+            } else {
+              router.push("/");
+            }
+          }
+          onClose();
+        }
+      } catch (error) {
+        setFormError(error.message);
+      } finally {
+        setLoading(false);
       }
-
-      onClose();
-      router.push(res.url || "/"); // Use NextAuth's built-in redirect
     } else {
       // Handle signup
       try {
@@ -126,8 +143,18 @@ export function AuthModal({ isOpen, onClose }) {
           password,
         });
 
-        if (signInResult.error) {
-          throw new Error(signInResult.error);
+        if (signInResult?.error) {
+          setFormError(res.error); // Show error in UI
+          setLoading(false);
+          return;
+        }
+        if (signInResult.ok) {
+          const session = await getSession(); // Add this to access role
+          if (session?.user?.role === "admin") {
+            router.push("/admin");
+          } else {
+            router.push("/");
+          }
         }
 
         // Close modal on successful signup and login

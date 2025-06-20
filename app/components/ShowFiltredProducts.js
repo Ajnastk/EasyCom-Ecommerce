@@ -3,8 +3,14 @@ import Link from "next/link";
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import { ShoppingBag, Star, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
+import { useDispatch } from "react-redux";
+import { addToCart } from "../store/cartSlice";
 
 const ProductCard = ({ product }) => {
+  const disptach = useDispatch();
+  const handleAddItem = (item) => {
+    disptach(addToCart(item));
+  };
   return (
     <div className="bg-white rounded-xl p-3 sm:p-4 border-1 hover:shadow-lg transition-shadow duration-300">
       <div className="relative overflow-hidden rounded-lg bg-gray-50 mb-3 sm:mb-4 aspect-square">
@@ -50,7 +56,10 @@ const ProductCard = ({ product }) => {
           )}
         </div>
 
-        <button className="px-6 items-center justify-center sm:px-8 py-1.5 sm:py-2 border border-gray-300 rounded text-xs sm:text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer flex duration-300">
+        <button
+          onClick={() => handleAddItem(product)}
+          className="px-6 items-center justify-center sm:px-8 py-1.5 sm:py-2 border border-gray-300 rounded text-xs sm:text-sm text-gray-700 transition-colors cursor-pointer flex duration-300  hover:bg-blue-900 hover:text-white active:bg-blue-400"
+        >
           <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
           Add to Cart
         </button>
@@ -102,13 +111,15 @@ const ShowFiltredProducts = ({ productType }) => {
   const [isScrollable, setIsScrollable] = useState(false);
   const [scrollPosition, setScrollPosition] = useState(0);
   const [maxScroll, setMaxScroll] = useState(0);
-
- 
+  const [responseNotOkey, setResponseNotOkey] = useState(false);
 
   // Fetch top products from API
   const fetchTopProducts = useCallback(async () => {
     try {
       const res = await fetch(`/api/products?${productType}=true&limit=10`);
+      if (!res) {
+        setResponseNotOkey(true);
+      }
       const data = await res.json();
 
       setProducts(data.products);
@@ -120,7 +131,7 @@ const ShowFiltredProducts = ({ productType }) => {
     }
   }, [productType]);
 
-   useEffect(() => {
+  useEffect(() => {
     fetchTopProducts();
   }, [fetchTopProducts]);
 
@@ -244,6 +255,10 @@ const ShowFiltredProducts = ({ productType }) => {
               // Show error message if fetch fails
               <div className="w-full text-center py-8 text-red-500">
                 {error}
+              </div>
+            ) : responseNotOkey ? (
+              <div className="flex justify-center items-center">
+                Products is not available
               </div>
             ) : (
               // Show actual products when loaded
