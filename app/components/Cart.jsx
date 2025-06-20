@@ -21,9 +21,9 @@ export default function Cart() {
       <h2 className="text-xl font-bold mb-4">Your Cart</h2>
       {cartItems.length === 0 && <p>No items in cart.</p>}
       {cartItems.map((item) => (
-        <div key={item.id} className="flex justify-between mb-2">
+        <div key={item._id} className="flex justify-between mb-2">
           <span>{item.name} x {item.quantity}</span>
-          <button onClick={() => handleRemove(item.id)} className="text-red-500">Remove</button>
+          <button onClick={() => handleRemove(item._id)} className="text-red-500">Remove</button>
         </div>
       ))}
     </div>

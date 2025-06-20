@@ -57,9 +57,9 @@ const ProductCard = ({ product }) => {
         </div>
 
         <button
-          onClick={handleAddItem(product)}
+          onClick={() => handleAddItem(product)}
           className="px-6 items-center justify-center sm:px-8 py-1.5 sm:py-2 border border-gray-300 rounded text-xs sm:text-sm text-gray-700 transition-colors cursor-pointer flex duration-300  hover:bg-blue-900 hover:text-white active:bg-blue-400"
-        > 
+        >
           <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
           Add to Cart
         </button>
