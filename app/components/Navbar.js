@@ -42,7 +42,10 @@ export default function Navbar() {
   const searchParams = useSearchParams();
 
   const cartItmes = useSelector((store) => store.cart.items);
-console.log("Redux store itmes",cartItmes);
+
+  useEffect(() => {
+    console.log("Redux store itmes", cartItmes);
+  }, [cartItmes]);
 
   // const {message} = router.query;
 
@@ -247,8 +250,11 @@ console.log("Redux store itmes",cartItmes);
                 <Heart size={22} />
                 <span className="text-xs mt-1">Wishlist</span>
               </button>
-              
-              <button className="flex flex-col items-center text-gray-700 hover:text-blue-600 relative">
+
+              <Link
+                href="/cart"
+                className="flex flex-col items-center text-gray-700 hover:text-blue-600 relative"
+              >
                 <ShoppingCart size={22} />
                 {cartItmes.length > 0 && (
                   <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
@@ -256,7 +262,7 @@ console.log("Redux store itmes",cartItmes);
                   </span>
                 )}
                 <span className="text-xs mt-1">Cart</span>
-              </button>
+              </Link>
             </div>
 
             {/* Mobile menu button */}
