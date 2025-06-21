@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 // Global shimmer animation styles
 
@@ -213,8 +214,9 @@ const ProductCategories = () => {
                     <CategorySkeleton key={`skeleton-${idx}`} />
                   ))
                 : categories.map((category, index) => (
-                    <div
+                  <Link
                       key={index}
+                      href={`/filteredProducts?category=${encodeURIComponent(category.name)}`}
                       className="flex-none px-2 sm:px-3 cursor-pointer group"
                       style={{ width: `${100 / itemsPerView}%` }}
                     >
@@ -236,7 +238,7 @@ const ProductCategories = () => {
                       <h3 className="text-xs sm:text-sm text-center text-gray-800 font-medium mb-0.5 sm:mb-1">
                         {category.name}
                       </h3>
-                    </div>
+                    </Link>
                   ))}
             </div>
           </div>

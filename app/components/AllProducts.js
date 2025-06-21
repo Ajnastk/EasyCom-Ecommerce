@@ -209,7 +209,7 @@ const AllProducts = () => {
         const res = await fetch(`/api/categories`);
         const data = await res.json();
 
-        const filtered = data.filter((category) => category.name.toLowerCase());
+        const filtered = data.filter(category => category.name.toLowerCase());
         // console.log(filtered);
 
         setCategories(filtered);
