@@ -6,11 +6,29 @@ import { ShoppingBag, Star, ChevronLeft, ChevronRight, Filter, Grid, List, SortA
 import Image from "next/image";
 import { useDispatch } from "react-redux";
 import { addToCart } from "../store/cartSlice";
+import { useSession } from "next-auth/react";
 
 const ProductCard = ({ product }) => {
   const dispatch = useDispatch();
-  const handleAddItem = (item) => {
+  const { data: session } = useSession();
+
+  const handleAddItem = async (item) => {
+    // 1. Update local redux store
     dispatch(addToCart(item));
+
+    // 2. Sync to DB if logged in
+    if (session?.user) {
+      try {
+        await fetch("/api/cart/add", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ product: item }),
+        });
+      } catch (err) {
+        console.error("Failed to sync cart to DB", err);
+      }
+    }
+
   };
   return (
     <div className="bg-white rounded-xl p-3 sm:p-4 border-1 hover:shadow-lg transition-shadow duration-300">

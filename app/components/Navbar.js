@@ -44,7 +44,7 @@ export default function Navbar() {
   const cartItmes = useSelector((store) => store.cart.items);
 
   useEffect(() => {
-    console.log("Redux store itmes", cartItmes);
+    // console.log("Redux store itmes", cartItmes);
   }, [cartItmes]);
 
   // const {message} = router.query;

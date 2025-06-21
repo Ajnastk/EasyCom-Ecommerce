@@ -73,7 +73,7 @@ const authOptions = {
         session.user.role = token.role;
         session.user.avatar = token.avatar;
       }
-      console.log("Session being created:", session); // Debug log
+      // console.log("Session being created:", session); 
       return session;
     },
   },
