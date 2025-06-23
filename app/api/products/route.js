@@ -167,7 +167,9 @@ export async function GET(request) {
     // Categories filter
     if (categoryNames.length > 0) {
       const categoryDocs = await Category.find({
-        name : {$in :categoryNames }
+        name : { 
+          $in :categoryNames.map(name=>new RegExp(`^${name}$`,`i`))
+         }
       }).select("_id");
       categoryIds = categoryDocs.map(cat => cat._id);
       query.category = { $in : categoryIds};
