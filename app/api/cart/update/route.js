@@ -1,4 +1,4 @@
-// app/api/cart/remove/route.js
+// /api/cart/update/route.js
 import dbConnect from "@/lib/mongodb";
 import Cart from "@/lib/models/Cart";
 import { getServerSession } from "next-auth";
@@ -14,11 +14,15 @@ export async function POST(req) {
     }
 
     const userId = session.user.id;
-    const { productId } = await req.json();
+    const { productId, quantity } = await req.json();
 
     // Validate input
     if (!productId) {
       return Response.json({ error: "Product ID is required" }, { status: 400 });
+    }
+
+    if (quantity === undefined || quantity < 0) {
+      return Response.json({ error: "Valid quantity is required" }, { status: 400 });
     }
 
     // Find user's cart
@@ -27,29 +31,37 @@ export async function POST(req) {
       return Response.json({ error: "Cart not found" }, { status: 404 });
     }
 
-    // Check if item exists in cart
-    const itemExists = cart.items.some(
+    // Find the item in cart
+    const itemIndex = cart.items.findIndex(
       (item) => item.productId.toString() === productId.toString()
     );
 
-    if (!itemExists) {
+    if (itemIndex === -1) {
       return Response.json({ error: "Item not found in cart" }, { status: 404 });
     }
 
-    // Remove item from cart
-    cart.items = cart.items.filter(
-      (item) => item.productId.toString() !== productId.toString()
-    );
+    // If quantity is 0, remove the item
+    if (quantity === 0) {
+      cart.items.splice(itemIndex, 1);
+      await cart.save();
+      return Response.json({ 
+        message: "Item removed from cart",
+        action: "removed"
+      });
+    }
 
+    // Update the quantity
+    cart.items[itemIndex].quantity = quantity;
     await cart.save();
 
     return Response.json({ 
-      message: "Item removed from cart successfully",
-      cartItemsCount: cart.items.length
+      message: "Cart updated successfully",
+      action: "updated",
+      newQuantity: quantity
     });
 
   } catch (err) {
-    console.error("Remove Cart Item Error:", err);
-    return Response.json({ error: "Failed to remove item from cart" }, { status: 500 });
+    console.error("Cart Update Error:", err);
+    return Response.json({ error: "Failed to update cart" }, { status: 500 });
   }
 }

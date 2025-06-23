@@ -111,9 +111,10 @@ export function AuthModal({ isOpen, onClose }) {
 
             if (session?.user?.role === "admin") {
               router.push("/admin");
-            } else {
-              router.push("/");
             }
+            //  else {
+            //   router.push("/");
+            // }
           }
           onClose();
         }

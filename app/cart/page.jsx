@@ -29,9 +29,6 @@ export default function CartPage() {
 
   return (
     <div>
-      <h1 className="h-[200px] text-2xl font-bold text-center mt-6">
-        Shopping Cart
-      </h1>
       <Cart />
     </div>
   );
