@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import productModel from "@/lib/models/Product";
+import Category from "@/lib/models/Category";
 import { v2 as cloudinary } from "cloudinary";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
@@ -144,9 +145,9 @@ export async function GET(request) {
 
     // Get filter parameters
     const search = searchParams.get("search") || "";
-    const categories =
-      searchParams.get("categories")?.split(",").filter(Boolean) || [];
-    // console.log("Category", categories);
+    const categoryNames =
+      searchParams.get("categories")?.split(",").map(c=>c.trim().toLowerCase()) || [];
+    let categoryIds =[];  
 
     const colors = searchParams.get("colors")?.split(",").filter(Boolean) || [];
     const minPrice = parseFloat(searchParams.get("minPrice")) || 0;
@@ -164,8 +165,12 @@ export async function GET(request) {
     }
 
     // Categories filter
-    if (categories.length > 0) {
-      query.category = { $in: categories };
+    if (categoryNames.length > 0) {
+      const categoryDocs = await Category.find({
+        name : {$in :categoryNames }
+      }).select("_id");
+      categoryIds = categoryDocs.map(cat => cat._id);
+      query.category = { $in : categoryIds};
     }
 
     // console.log(query.category);
