@@ -2,15 +2,38 @@
 import Link from "next/link";
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ShoppingBag, Star, ChevronLeft, ChevronRight, Filter, Grid, List, SortAsc } from "lucide-react";
+import {
+  ShoppingBag,
+  Star,
+  ChevronLeft,
+  ChevronRight,
+  Filter,
+  Grid,
+  List,
+  SortAsc,
+  Heart,
+} from "lucide-react";
 import Image from "next/image";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../store/cartSlice";
+import { toggleWishlist } from "../store/wishlistSlice";
 import { useSession } from "next-auth/react";
 
 const ProductCard = ({ product }) => {
   const dispatch = useDispatch();
   const { data: session } = useSession();
+
+  const wishlist = useSelector((state) => state.wishlist.items);
+
+  const isWishlisted = wishlist.some((item) => item._id === product._id);
+
+  const handleWishlistToggle = () => {
+    if (!session?.user) {
+      alert("Please login to add items to your wishlist");
+      return;
+    }
+    dispatch(toggleWishlist(product));
+  };
 
   const handleAddItem = async (item) => {
     // 1. Update local redux store
@@ -28,7 +51,6 @@ const ProductCard = ({ product }) => {
         console.error("Failed to sync cart to DB", err);
       }
     }
-
   };
   return (
     <div className="bg-white rounded-xl p-3 sm:p-4 border-1 hover:shadow-lg transition-shadow duration-300">
@@ -74,14 +96,28 @@ const ProductCard = ({ product }) => {
             </span>
           )}
         </div>
-
+        <div className="flex justify-between">
         <button
           onClick={() => handleAddItem(product)}
-          className="px-6 items-center justify-center sm:px-8 py-1.5 sm:py-2 border border-gray-300 rounded text-xs sm:text-sm text-gray-700 transition-colors cursor-pointer flex duration-300 hover:bg-blue-900 hover:text-white active:bg-blue-400"
+          className="px-3 items-center justify-center sm:p-2 py-1.5 sm:py-2 border border-gray-300 rounded text-xs sm:text-sm text-gray-700 transition-colors cursor-pointer flex duration-300 hover:bg-blue-900 hover:text-white active:bg-blue-400"
         >
           <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
           Add to Cart
         </button>
+        <button
+          onClick={handleWishlistToggle}
+          className={`px-3 items-center justify-center sm:p-2 py-1.5 sm:py-2 border border-gray-300 rounded text-xs sm:text-sm text-gray-700 transition-colors cursor-pointer flex duration-300 hover:bg-blue-900 hover:text-white active:bg-blue-400"${
+            isWishlisted
+              ? "bg-red-500 text-white border-red-500 hover:bg-red-600"
+              : "border-gray-300 text-gray-700 hover:bg-blue-900"
+          }`}
+        >
+          <Heart
+            className={`w-4 h-4 mr-2 ${isWishlisted ? "fill-white" : ""}`}
+          />
+          {isWishlisted ? "Wishlisted" : "Wishlist"}
+        </button>
+        </div>
       </div>
     </div>
   );
@@ -113,15 +149,15 @@ const ProductCardSkeleton = () => {
   );
 };
 
-const ShowFiltredProducts = ({ 
-  productType, 
-  category, 
-  title, 
-  subtitle, 
+const ShowFiltredProducts = ({
+  productType,
+  category,
+  title,
+  subtitle,
   limit = 10,
   showViewAll = true,
   viewAllLink = "/products",
-  layoutType = "slider" // "slider" or "grid"
+  layoutType = "slider", // "slider" or "grid"
 }) => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -136,11 +172,11 @@ const ShowFiltredProducts = ({
   // Build query parameters dynamically
   const buildQueryParams = useCallback(() => {
     const params = new URLSearchParams();
-    
-    if (productType) params.append(productType, 'true');
-    if (category) params.append('categories', category);
-    params.append('limit', limit.toString());
-    
+
+    if (productType) params.append(productType, "true");
+    if (category) params.append("categories", category);
+    params.append("limit", limit.toString());
+
     return params.toString();
   }, [productType, category, limit]);
 
@@ -152,12 +188,12 @@ const ShowFiltredProducts = ({
       const res = await fetch(`/api/products?${queryParams}`);
 
       console.log(`/api/products?${queryParams}`);
-      
+
       if (!res.ok) {
         setResponseNotOkey(true);
         return;
       }
-      
+
       const data = await res.json();
       setProducts(data.products || []);
     } catch (error) {
@@ -175,7 +211,7 @@ const ShowFiltredProducts = ({
   // Handle scrollable logic for slider layout
   useEffect(() => {
     if (layoutType !== "slider") return;
-    
+
     const checkScrollable = () => {
       if (containerRef.current) {
         const { scrollWidth, clientWidth } = containerRef.current;
@@ -216,33 +252,35 @@ const ShowFiltredProducts = ({
   // Generate title based on props
   const getTitle = () => {
     if (title) return title;
-    
+
     if (category) {
       return (
         <h2 className="text-center">
           <span className="text-xl sm:text-2xl md:text-3xl text-gray-800 capitalize">
-            {category} 
+            {category}
           </span>
           <span className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
-            {" "}Collection
+            {" "}
+            Collection
           </span>
         </h2>
       );
     }
-    
+
     if (productType === "TopProduct") {
       return (
         <h2 className="text-center">
           <span className="text-xl sm:text-2xl md:text-3xl text-gray-800">
-            Top 
+            Top
           </span>
           <span className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
-            {" "}Picks
+            {" "}
+            Picks
           </span>
         </h2>
       );
     }
-    
+
     if (productType === "NewArrival") {
       return (
         <h2 className="text-center">
@@ -250,22 +288,23 @@ const ShowFiltredProducts = ({
             New
           </span>
           <span className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
-            {" "}Arrivals
+            {" "}
+            Arrivals
           </span>
         </h2>
       );
     }
-    
+
     return <h2></h2>;
   };
 
   const getSubtitle = () => {
     if (subtitle) return subtitle;
-    
+
     if (category) {
       return `Explore our premium ${category} collection crafted for excellence.`;
     }
-    
+
     return "Discover our handpicked selection of premium Perfume that define your attractiveness.";
   };
 
@@ -276,8 +315,12 @@ const ShowFiltredProducts = ({
         <>
           <style jsx global>{`
             @keyframes shimmer {
-              0% { background-position: 100% 50%; }
-              100% { background-position: 0% 50%; }
+              0% {
+                background-position: 100% 50%;
+              }
+              100% {
+                background-position: 0% 50%;
+              }
             }
             .animate-shimmer {
               animation: shimmer 2s infinite linear;
@@ -286,9 +329,10 @@ const ShowFiltredProducts = ({
           {Array.from({ length: 4 }).map((_, idx) => (
             <div
               key={idx}
-              className={layoutType === "slider" 
-                ? "flex-shrink-0 w-full sm:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-0.75rem)] snap-center"
-                : "w-full"
+              className={
+                layoutType === "slider"
+                  ? "flex-shrink-0 w-full sm:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-0.75rem)] snap-center"
+                  : "w-full"
               }
             >
               <div className="max-w-[320px] mx-auto">
@@ -327,9 +371,10 @@ const ShowFiltredProducts = ({
     return products.map((product, idx) => (
       <div
         key={product.id || idx}
-        className={layoutType === "slider" 
-          ? "flex-shrink-0 w-full sm:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-0.75rem)] snap-center"
-          : "w-full"
+        className={
+          layoutType === "slider"
+            ? "flex-shrink-0 w-full sm:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-0.75rem)] snap-center"
+            : "w-full"
         }
       >
         <div className="max-w-[320px] mx-auto">
@@ -367,24 +412,27 @@ const ShowFiltredProducts = ({
           <div
             ref={containerRef}
             onScroll={handleScrollChange}
-            className={layoutType === "slider" 
-              ? "flex overflow-x-auto gap-3 md:gap-4 pb-4 relative [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] snap-x snap-mandatory"
-              : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6"
+            className={
+              layoutType === "slider"
+                ? "flex overflow-x-auto gap-3 md:gap-4 pb-4 relative [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] snap-x snap-mandatory"
+                : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6"
             }
           >
             {renderProducts()}
           </div>
 
           {/* Right Navigation Button for Slider Layout */}
-          {layoutType === "slider" && isScrollable && scrollPosition < maxScroll && (
-            <button
-              onClick={() => handleScroll("right")}
-              className="absolute -right-2 sm:-right-6 top-1/2 -translate-y-1/2 z-50 bg-white hover:bg-gray-100 text-[#1a2649] p-2 sm:p-3 rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center justify-center"
-              aria-label="Scroll right"
-            >
-              <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
-            </button>
-          )}
+          {layoutType === "slider" &&
+            isScrollable &&
+            scrollPosition < maxScroll && (
+              <button
+                onClick={() => handleScroll("right")}
+                className="absolute -right-2 sm:-right-6 top-1/2 -translate-y-1/2 z-50 bg-white hover:bg-gray-100 text-[#1a2649] p-2 sm:p-3 rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center justify-center"
+                aria-label="Scroll right"
+              >
+                <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+              </button>
+            )}
         </div>
 
         {/* View All Button */}
